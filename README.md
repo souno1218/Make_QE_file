@@ -53,7 +53,7 @@ Explain how to run the automated tests for this system
 
 ## Authors
 
-* **河野 颯之介**
+* **河野 颯之介(kono sonosuke)**
 
 ## License
 
