@@ -1,6 +1,6 @@
 # Make_QE_file
 
-Quantum Espresso calculations first require an input file.
+Quantum Espresso calculations first require an input file.   
 Since it is time-consuming to create such a file by copy-and-paste from a crystal information file (cif), etc., we have scripted it in python.
 
 - cif2qe_in
@@ -11,7 +11,7 @@ Since it is time-consuming to create such a file by copy-and-paste from a crysta
 - qe_out2cif
   - Create cif from qe output file (Only relax and vc-relax are currently confirmed.
 
-I was able to use it for my application, but I think there are cases where it may not work.
+I was able to use it for my application, but I think there are cases where it may not work.   
 Please modify it by yourself.
 
 ## Getting Started
@@ -61,9 +61,9 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 ## Finally.
 
-I am Japanese and had never used GitHub until I wrote this.
-I use Deepl because I am not good at English.
-This ReedMe is also written with reference to the following page.
+I am Japanese and had never used GitHub until I wrote this.   
+I use Deepl because I am not good at English.   
+This ReedMe is also written with reference to the following page.   
 https://gist.github.com/PurpleBooth/109311bb0361f32d87a2
 
 I would like to ask you to support us continuously.
