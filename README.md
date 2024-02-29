@@ -1,15 +1,15 @@
 # Make_QE_file
 
 Quantum Espresso calculations first require an input file.   
-Since it is time-consuming to create such a file by copy-and-paste from a crystal information file (cif), etc., we have scripted it in python.
+Since it is time-consuming to create such a file by copy-and-paste from a crystal information file (CiF), etc., we have scripted it in python.
 
 - cif2qe_in
-  - Create qe input file from cif (Only relax and vc-relax are currently confirmed.)
+  - Create QE input file from CiF (Only relax and vc-relax are currently confirmed.)
 - qe_out2in
-  - Create qe input file from qe output file (Only relax and vc-relax are currently confirmed.)
+  - Create QE input file from QE output file (Only relax and vc-relax are currently confirmed.)
   - Used for relax->vc-relax, etc.
 - qe_out2cif
-  - Create cif from qe output file (Only relax and vc-relax are currently confirmed.
+  - Create CiF from QE output file (Only relax and vc-relax are currently confirmed.
 
 I was able to use it for my application, but I think there are cases where it may not work.   
 Please modify it by yourself.
@@ -45,7 +45,7 @@ Explain how to run the automated tests for this system
 
 ## Built With
 
-* [Pymatgen](https://pymatgen.org) - Used to read cif
+* [Pymatgen](https://pymatgen.org) - Used to read CiF
 * [numpy](https://numpy.org) - Used for various calculations
 * [pandas](https://pandas.pydata.org) - Used to read csv
 
