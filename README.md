@@ -9,7 +9,7 @@ Since it is time-consuming to create such a file by copy-and-paste from a crysta
   - Create QE input file from QE output file (Only relax and vc-relax are currently confirmed.)
   - Used for relax->vc-relax, etc.
 - qe_out2cif
-  - Create CiF from QE output file (Only relax and vc-relax are currently confirmed.
+  - Create CiF from QE output file (Only relax and vc-relax are currently confirmed.)
 
 I was able to use it for my application, but I think there are cases where it may not work.   
 Please modify it by yourself.
