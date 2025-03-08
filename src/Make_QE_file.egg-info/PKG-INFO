@@ -4,6 +4,7 @@ Version: 0.2
 Summary: quantum-espressoのための.inを作ったり、.outからcifを作る
 Author-email: souno1218 <supinosaurusuz@gmail.com>
 Requires-Python: >=3.10
+License-File: LICENSE
 Requires-Dist: pymatgen
 Requires-Dist: numpy
 Requires-Dist: pandas

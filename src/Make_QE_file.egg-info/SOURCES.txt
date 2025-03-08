@@ -1,6 +1,9 @@
 .DS_Store
+LICENSE
+README.md
 pyproject.toml
-.ipynb_checkpoints/pyproject-checkpoint.toml
+src/.DS_Store
+src/Make_QE_file/.DS_Store
 src/Make_QE_file/__init__.py
 src/Make_QE_file/check_output.py
 src/Make_QE_file/cif_to_params.py
@@ -13,3 +16,16 @@ src/Make_QE_file.egg-info/SOURCES.txt
 src/Make_QE_file.egg-info/dependency_links.txt
 src/Make_QE_file.egg-info/requires.txt
 src/Make_QE_file.egg-info/top_level.txt
+src/Make_QE_file/__pycache__/__init__.cpython-310.pyc
+src/Make_QE_file/__pycache__/check_output.cpython-310.pyc
+src/Make_QE_file/__pycache__/cif_to_params.cpython-310.pyc
+src/Make_QE_file/__pycache__/make_input.cpython-310.pyc
+src/Make_QE_file/__pycache__/output_to_params.cpython-310.pyc
+src/Make_QE_file/__pycache__/utils.cpython-310.pyc
+src/Make_QE_file/__pycache__/write_new_cif.cpython-310.pyc
+src/Make_QE_file/templates/template.band_x.in
+src/Make_QE_file/templates/template.dos.in
+src/Make_QE_file/templates/template.in
+src/Make_QE_file/templates/template.projwfc.in
+src/Make_QE_file/templates/template_smearing.in
+src/Make_QE_file/templates/template_sol.in
