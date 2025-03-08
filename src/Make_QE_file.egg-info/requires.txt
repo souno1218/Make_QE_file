@@ -1,4 +1,0 @@
-pymatgen
-numpy
-pandas
-matplotlib
