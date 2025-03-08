@@ -1,0 +1,44 @@
+!---- starting input file ----
+&control
+ calculation = vc-relax,             # change
+ prefix = structure_name,            # change
+ pseudo_dir = '/home/hpc/kjpaw_dir', # change
+ tstress = .true.
+ tprnfor = .true.
+ outdir='./work/'
+ etot_conv_thr = 1.d-5
+ forc_conv_thr = 1.d-4
+ disk_io='low'
+ wf_collect=.true.
+/
+&system
+ space_group = 139,       # change
+ A     = 4.17899,         # change
+ B     = 4.17899,         # change
+ C     = 19.17656,        # change
+ cosBC = 0.00000,         # change
+ cosAC = 0.00000,         # change
+ cosAB = 0.00000,         # change
+ nat = 5,                 # change
+ ntyp = 5,                # change
+ ecutwfc = 55.0,          # change
+ ecutrho = 323.0          # change
+ occupations = 'smearing'
+ smearing = 'm-p'
+ degauss = 0.01
+/
+&electrons
+ electron_maxstep = 200
+ mixing_beta = 0.5
+ conv_thr = 1.0d-8
+/
+&ions
+/
+&cell
+/
+ATOMIC_SPECIES
+  Ba -1 Ba.pbe-spn-kjpaw_psl.1.0.0.UPF    # change
+ATOMIC_POSITIONS {crystal_sg}             # change
+  Ba  0.50000  0.50000  0.09230  0 0 1    # change
+K_POINTS {automatic}                      # change
+ 5 5 2 0 0 0                              # change

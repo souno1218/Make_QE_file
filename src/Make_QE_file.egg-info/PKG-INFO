@@ -1,0 +1,10 @@
+Metadata-Version: 2.2
+Name: Make_QE_file
+Version: 0.2
+Summary: quantum-espressoのための.inを作ったり、.outからcifを作る
+Author-email: souno1218 <supinosaurusuz@gmail.com>
+Requires-Python: >=3.10
+Requires-Dist: pymatgen
+Requires-Dist: numpy
+Requires-Dist: pandas
+Requires-Dist: matplotlib

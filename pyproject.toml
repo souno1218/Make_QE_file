@@ -1,19 +1,20 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools", "setuptools_scm"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "Make_QE_file"
-version = "0.1"
+version = "0.2"
 description = "quantum-espressoのための.inを作ったり、.outからcifを作る"
-#readme = "README.md、相対ぱす"
-#requires-python = "==3.10.*"
+# readme = "README.md、相対ぱす"
+requires-python = ">=3.10"
 authors = [{name = "souno1218", email = "supinosaurusuz@gmail.com"},]
-dependencies = ["pymatgen","numpy","pandas",
-]
+dependencies = ["pymatgen", "numpy", "pandas", "matplotlib"]
+[tool.setuptools]
+package-dir = {"" = "src"}
+[tool.setuptools.package-data]
+"mypackage" = ["templates/*.in"]
 
 
-#https://nikkie-ftnext.hatenablog.com/entry/pyproject-toml-project-keys-and-examples
-#https://qiita.com/ieiringoo/items/4bef4fc9975803b08671
-#https://pymatgen.org/CHANGES.html
-#"pymatgen>=2024.2.23"
+# hhttps://qiita.com/ieiringoo/items/4bef4fc9975803b08671
+# "pymatgen>=2024.2.23"

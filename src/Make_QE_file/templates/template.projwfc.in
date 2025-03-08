@@ -1,0 +1,8 @@
+&projwfc
+   outdir = './work/',       # change
+   prefix='structure_name',  # change
+   deltae =  0.01            # change
+   emax   =  50
+   emin   = -50
+   degauss = 0.01,
+/
