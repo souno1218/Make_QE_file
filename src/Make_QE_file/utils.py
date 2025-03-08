@@ -55,8 +55,8 @@ def check_args(is_None_continue, **kwargs):
                 if not isinstance(kwargs[i], str):
                     raise TypeError(f"The argument {i} must be str")
             case "params_structure":
-                if not isinstance(kwargs[i], pd.core.frame.DataFrame):
-                    raise TypeError(f"The argument {i} must be pd.core.frame.DataFrame")
+                if not isinstance(kwargs[i], dict):
+                    raise TypeError(f"The argument {i} must be dict")
                 check_params(kwargs[i])
             case "min_kpoint":
                 if not isinstance(kwargs[i], int):
