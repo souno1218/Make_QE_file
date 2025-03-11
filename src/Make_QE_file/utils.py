@@ -279,7 +279,7 @@ def plot_pdos(
             x = np.array([float(data[i].split()[0]) for i in range(1, len(data) - 1)])
             y = np.array([float(data[i].split()[1]) for i in range(1, len(data) - 1)])
             integral_y = np.array([float(data[i].split()[2]) for i in range(1, len(data) - 1)])
-        TF = xlim[0] < x - highest_occupied < xlim[1]
+        TF = (xlim[0] < x - highest_occupied) & (x - highest_occupied < xlim[1])
         plt.plot(x - highest_occupied, y.T, label="dos")
         y_max = max(y_max, np.max(y.T[TF]))
         plt.plot(x - highest_occupied, integral_y.T, label="integral dos")
@@ -294,7 +294,7 @@ def plot_pdos(
         with open(files[0]) as pdos:
             data = pdos.readlines()
             x = np.array([float(data[i].split()[0]) for i in range(1, len(data) - 1)])
-        TF = xlim[0] < x - highest_occupied < xlim[1]
+        TF = (xlim[0] < x - highest_occupied) & (x - highest_occupied < xlim[1])
         dict_y = {}
         for i, j in enumerate(files):
             with open(j, "r") as pdos:
@@ -323,7 +323,7 @@ def plot_pdos(
             x = np.array([float(data[i].split()[0]) for i in range(1, len(data) - 1)])
             y = np.array([float(data[i].split()[2]) for i in range(1, len(data) - 1)])
         plt.plot(x - highest_occupied, y.T, label="tot pdos")
-        TF = xlim[0] < x - highest_occupied < xlim[1]
+        TF = (xlim[0] < x - highest_occupied) & (x - highest_occupied < xlim[1])
         y_max = max(y_max, np.max(y.T[TF]))
     if "tot_dos" in plot_list:
         tot_pdos_path = f"{pdos_dir_path}/*.pdos_tot"
@@ -337,7 +337,7 @@ def plot_pdos(
             x = np.array([float(data[i].split()[0]) for i in range(1, len(data) - 1)])
             y = np.array([float(data[i].split()[1]) for i in range(1, len(data) - 1)])
         plt.plot(x - highest_occupied, y.T, label="tot dos")
-        TF = xlim[0] < x - highest_occupied < xlim[1]
+        TF = (xlim[0] < x - highest_occupied) & (x - highest_occupied < xlim[1])
         y_max = max(y_max, np.max(y.T[TF]))
     plt.xlim(xlim)
     if not ylim is None:
