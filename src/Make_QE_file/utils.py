@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import os
+import os, glob, re
 from decimal import Decimal, ROUND_HALF_UP
 
 # https://qiita.com/xa_member/items/a519c53b63df75a68894
@@ -176,4 +176,164 @@ def check_output(import_out_path):
         ax.legend()
         ax.grid(True)  # グリッドを表示
     plt.tight_layout()
+    plt.show()
+
+
+def read_EFermi(output_path):
+    with open(output_path, "r") as output:
+        data = output.readlines()
+        for i in range(len(data)):
+            #  E (eV)   dos(E)     Int dos(E) EFermi =   10.292 eV
+            # the Fermi energy is    11.7660 ev
+            if "the Fermi energy is" in data[i]:
+                _split = data[i].replace("the Fermi energy is", "").split()
+                for j in range(len(_split)):
+                    try:
+                        EFermi = float(_split[j])
+                        break
+                    except:
+                        None
+                return EFermi
+            elif "EFermi =" in data[i]:
+                _split = data[i].split()
+                EFermi_index = -1
+                for j in range(len(_split)):
+                    if "EFermi" in _split[j]:
+                        EFermi_index = j
+                        break
+                for j in range(EFermi_index + 1, len(_split)):
+                    try:
+                        EFermi = float(_split[j])
+                        break
+                    except:
+                        None
+                return EFermi
+    raise ValueError(f"Error: Fermi energy not found in {output_path}.")
+
+
+def read_highest_occupied(gnu_path, EFermi, ymin=-5):
+    with open(gnu_path, "r") as bands_gnu:
+        data = bands_gnu.readlines()
+        separate_index = [-1]
+        separate_index += [i for i, j in enumerate(data) if len(j.split()) == 0]
+        x = np.array([float(data[i].split()[0]) for i in range(separate_index[0] + 1, separate_index[1])])
+        y = np.empty((len(separate_index) - 1, x.shape[0]), dtype="float64")
+        for t in range(len(separate_index) - 1):
+            for i, j in enumerate(range(separate_index[t] + 1, separate_index[t + 1])):
+                y[t, i] = float(data[j].split()[1])
+        y_ = np.sort(y[y - EFermi > ymin])
+        highest_occupied = y_[np.argmax(np.diff(y_))]
+    return highest_occupied
+
+
+def band_plot(gnu_path, k_point_divisions, brilloin_zone_path, EFermi, is_save=False, output_path=None, ylim=[-5, 5]):
+    if is_save and (output_path is None):
+        raise ()
+    with open(gnu_path, "r") as bands_gnu:
+        data = bands_gnu.readlines()
+        separate_index = [-1]
+        separate_index += [i for i, j in enumerate(data) if len(j.split()) == 0]
+        x = np.array([float(data[i].split()[0]) for i in range(separate_index[0] + 1, separate_index[1])])
+        y = np.empty((len(separate_index) - 1, x.shape[0]), dtype="float64")
+        for t in range(len(separate_index) - 1):
+            for i, j in enumerate(range(separate_index[t] + 1, separate_index[t + 1])):
+                y[t, i] = float(data[j].split()[1])
+        y_ = np.sort(y[y - EFermi > ylim[0]])
+        highest_occupied = y_[np.argmax(np.diff(y_))]
+        # plt.plot(x,y.T-EFermi)
+        plt.plot(x, y.T - highest_occupied)
+    index = 0
+    for i in range(len(brilloin_zone_path)):
+        plt.vlines(x[index], ylim[0], ylim[1], color="black")
+        text = brilloin_zone_path[i]
+        if text == "gG":
+            text = r"$\Gamma$"
+        elif text == "gS":
+            text = r"$\Sigma$"
+        plt.text(x[index], ylim[0] - 0.5, text, va="top", ha="center", fontsize="xx-large")
+        index += k_point_divisions[i]
+    plt.ylabel("Energy (eV)", fontsize="xx-large")
+    plt.xlim(np.min(x), np.max(x))
+    plt.ylim(ylim)
+    plt.tick_params(labelbottom=False, bottom=False)
+    if is_save:
+        plt.savefig(output_path, dpi=200, bbox_inches="tight")
+    plt.show()
+
+
+def plot_pdos(
+    pdos_dir_path, highest_occupied, plot_list=["pdos"], xlim=[-10, 10], ylim=None, is_save=False, color_dict=None
+):
+    # plot_list => dos, pdos, tot_pdos, tot_pdos, tot_dos
+    if "dos" in plot_list:
+        dos_path = f"{pdos_dir_path}/*.dos"
+        dos_files = glob.glob(dos_path)
+        if len(dos_files) == 0:
+            raise
+        elif len(dos_files) != 1:
+            raise
+        with open(dos_files[0], "r") as dos:
+            data = dos.readlines()
+            x = np.array([float(data[i].split()[0]) for i in range(1, len(data) - 1)])
+            y = np.array([float(data[i].split()[1]) for i in range(1, len(data) - 1)])
+            integral_y = np.array([float(data[i].split()[2]) for i in range(1, len(data) - 1)])
+        plt.plot(x - highest_occupied, y.T, label="dos")
+        plt.plot(x - highest_occupied, integral_y.T, label="integral dos")
+    if "pdos" in plot_list:
+        files = glob.glob(f"{pdos_dir_path}/*_wfc*")
+        elements = [
+            re.search(r"\((\D*)\)", file.split("/")[-1].split(".")[-1].split("#")[-2]).group(1) for file in files
+        ]
+        # site_elements=[int(re.search(r"(\d*)\(",file.split("/")[-1].split(".")[-1].split("#")[-2]).group(1)) for file in files]
+        # orbit=[file.split("/")[-1].split(".")[-1].split("#")[-1] for file in files]
+        with open(files[0]) as pdos:
+            data = pdos.readlines()
+            x = np.array([float(data[i].split()[0]) for i in range(1, len(data) - 1)])
+        dict_y = {}
+        for i, j in enumerate(files):
+            with open(j, "r") as pdos:
+                data = pdos.readlines()
+                if elements[i] in dict_y.keys():
+                    dict_y[elements[i]] += np.array([float(data[t].split()[1]) for t in range(1, len(data) - 1)])
+                else:
+                    dict_y[elements[i]] = np.array([float(data[t].split()[1]) for t in range(1, len(data) - 1)])
+        if isinstance(color_dict, dict):
+            for i in dict_y.keys():
+                plt.plot(x - highest_occupied, dict_y[i].T, label=i, c=color_dict[i])
+        else:
+            for i in dict_y.keys():
+                plt.plot(x - highest_occupied, dict_y[i].T, label=i)
+    if "tot_pdos" in plot_list:
+        tot_pdos_path = f"{pdos_dir_path}/*.pdos_tot"
+        tot_pdos_files = glob.glob(tot_pdos_path)
+        if len(tot_pdos_files) == 0:
+            raise
+        elif len(tot_pdos_files) != 1:
+            raise
+        with open(tot_pdos_files[0], "r") as dos:
+            data = dos.readlines()
+            x = np.array([float(data[i].split()[0]) for i in range(1, len(data) - 1)])
+            y = np.array([float(data[i].split()[2]) for i in range(1, len(data) - 1)])
+        plt.plot(x - highest_occupied, y.T, label="tot pdos")
+    if "tot_dos" in plot_list:
+        tot_pdos_path = f"{pdos_dir_path}/*.pdos_tot"
+        tot_pdos_files = glob.glob(tot_pdos_path)
+        if len(tot_pdos_files) == 0:
+            raise
+        elif len(tot_pdos_files) != 1:
+            raise
+        with open(tot_pdos_files[0], "r") as dos:
+            data = dos.readlines()
+            x = np.array([float(data[i].split()[0]) for i in range(1, len(data) - 1)])
+            y = np.array([float(data[i].split()[1]) for i in range(1, len(data) - 1)])
+        plt.plot(x - highest_occupied, y.T, label="tot dos")
+    ################################################################################
+    plt.xlim(xlim)
+    if not ylim is None:
+        plt.ylim(ylim)
+    else:
+        plt.ylim(bottom=-1)
+    plt.legend()
+    if is_save:
+        plt.savefig(f"{pdos_dir_path}/pdos.png", dpi=200, bbox_inches="tight")
     plt.show()
