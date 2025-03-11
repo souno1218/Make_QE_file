@@ -227,6 +227,7 @@ def read_highest_occupied(gnu_path, EFermi, ymin=-5):
 
 
 def band_plot(gnu_path, k_point_divisions, brilloin_zone_path, EFermi, is_save=False, output_path=None, ylim=[-5, 5]):
+    plt.clf()
     if is_save and (output_path is None):
         raise ()
     with open(gnu_path, "r") as bands_gnu:
@@ -264,6 +265,7 @@ def band_plot(gnu_path, k_point_divisions, brilloin_zone_path, EFermi, is_save=F
 def plot_pdos(
     pdos_dir_path, highest_occupied, plot_list=["pdos"], xlim=[-10, 10], ylim=None, is_save=False, color_dict=None
 ):
+    y_max = -1
     # plot_list => dos, pdos, tot_pdos, tot_pdos, tot_dos
     if "dos" in plot_list:
         dos_path = f"{pdos_dir_path}/*.dos"
@@ -277,8 +279,11 @@ def plot_pdos(
             x = np.array([float(data[i].split()[0]) for i in range(1, len(data) - 1)])
             y = np.array([float(data[i].split()[1]) for i in range(1, len(data) - 1)])
             integral_y = np.array([float(data[i].split()[2]) for i in range(1, len(data) - 1)])
+        TF = xlim[0] < x - highest_occupied < xlim[1]
         plt.plot(x - highest_occupied, y.T, label="dos")
+        y_max = max(y_max, np.max(y.T[TF]))
         plt.plot(x - highest_occupied, integral_y.T, label="integral dos")
+        y_max = max(y_max, np.max(integral_y.T[TF]))
     if "pdos" in plot_list:
         files = glob.glob(f"{pdos_dir_path}/*_wfc*")
         elements = [
@@ -289,6 +294,7 @@ def plot_pdos(
         with open(files[0]) as pdos:
             data = pdos.readlines()
             x = np.array([float(data[i].split()[0]) for i in range(1, len(data) - 1)])
+        TF = xlim[0] < x - highest_occupied < xlim[1]
         dict_y = {}
         for i, j in enumerate(files):
             with open(j, "r") as pdos:
@@ -300,9 +306,11 @@ def plot_pdos(
         if isinstance(color_dict, dict):
             for i in dict_y.keys():
                 plt.plot(x - highest_occupied, dict_y[i].T, label=i, c=color_dict[i])
+                y_max = max(y_max, np.max(dict_y[i].T[TF]))
         else:
             for i in dict_y.keys():
                 plt.plot(x - highest_occupied, dict_y[i].T, label=i)
+                y_max = max(y_max, np.max(dict_y[i].T[TF]))
     if "tot_pdos" in plot_list:
         tot_pdos_path = f"{pdos_dir_path}/*.pdos_tot"
         tot_pdos_files = glob.glob(tot_pdos_path)
@@ -315,6 +323,8 @@ def plot_pdos(
             x = np.array([float(data[i].split()[0]) for i in range(1, len(data) - 1)])
             y = np.array([float(data[i].split()[2]) for i in range(1, len(data) - 1)])
         plt.plot(x - highest_occupied, y.T, label="tot pdos")
+        TF = xlim[0] < x - highest_occupied < xlim[1]
+        y_max = max(y_max, np.max(y.T[TF]))
     if "tot_dos" in plot_list:
         tot_pdos_path = f"{pdos_dir_path}/*.pdos_tot"
         tot_pdos_files = glob.glob(tot_pdos_path)
@@ -327,12 +337,13 @@ def plot_pdos(
             x = np.array([float(data[i].split()[0]) for i in range(1, len(data) - 1)])
             y = np.array([float(data[i].split()[1]) for i in range(1, len(data) - 1)])
         plt.plot(x - highest_occupied, y.T, label="tot dos")
-    ################################################################################
+        TF = xlim[0] < x - highest_occupied < xlim[1]
+        y_max = max(y_max, np.max(y.T[TF]))
     plt.xlim(xlim)
     if not ylim is None:
         plt.ylim(ylim)
     else:
-        plt.ylim(bottom=-1)
+        plt.ylim((-1, y_max * 1.1))
     plt.legend()
     if is_save:
         plt.savefig(f"{pdos_dir_path}/pdos.png", dpi=200, bbox_inches="tight")
