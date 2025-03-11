@@ -226,10 +226,18 @@ def read_highest_occupied(gnu_path, EFermi, ymin=-5):
     return highest_occupied
 
 
-def band_plot(gnu_path, k_point_divisions, brilloin_zone_path, EFermi, is_save=False, output_path=None, ylim=[-5, 5]):
-    plt.clf()
-    if is_save and (output_path is None):
-        raise ()
+def band_plot(
+    gnu_path,
+    k_point_divisions,
+    brilloin_zone_path,
+    EFermi,
+    is_save=False,
+    is_plot=False,
+    savefig_path=None,
+    ylim=[-5, 5],
+):
+    if is_save and (savefig_path is None):
+        raise ValueError(f"Error: if save pic, need savefig_path")
     with open(gnu_path, "r") as bands_gnu:
         data = bands_gnu.readlines()
         separate_index = [-1]
@@ -253,18 +261,29 @@ def band_plot(gnu_path, k_point_divisions, brilloin_zone_path, EFermi, is_save=F
             text = r"$\Sigma$"
         plt.text(x[index], ylim[0] - 0.5, text, va="top", ha="center", fontsize="xx-large")
         index += k_point_divisions[i]
-    plt.ylabel("Energy (eV)", fontsize="xx-large")
+    plt.ylabel("E - EFermi (eV)", fontsize="xx-large")
     plt.xlim(np.min(x), np.max(x))
     plt.ylim(ylim)
     plt.tick_params(labelbottom=False, bottom=False)
     if is_save:
-        plt.savefig(output_path, dpi=200, bbox_inches="tight")
-    plt.show()
+        plt.savefig(savefig_path, dpi=200, bbox_inches="tight")
+    if is_plot:
+        plt.show()
 
 
 def plot_pdos(
-    pdos_dir_path, highest_occupied, plot_list=["pdos"], xlim=[-10, 10], ylim=None, is_save=False, color_dict=None
+    pdos_dir_path,
+    highest_occupied,
+    plot_list=["pdos"],
+    xlim=[-10, 10],
+    savefig_path=None,
+    ylim=None,
+    is_save=False,
+    is_plot=False,
+    color_dict=None,
 ):
+    if is_save and (savefig_path is None):
+        raise ValueError(f"Error: if save pic, need savefig_path")
     y_max = -1
     # plot_list => dos, pdos, tot_pdos, tot_pdos, tot_dos
     if "dos" in plot_list:
@@ -339,6 +358,8 @@ def plot_pdos(
         plt.plot(x - highest_occupied, y.T, label="tot dos")
         TF = (xlim[0] < x - highest_occupied) & (x - highest_occupied < xlim[1])
         y_max = max(y_max, np.max(y.T[TF]))
+    plt.xlabel("PDoS")
+    plt.ylabel("E - EFermi (eV)")
     plt.xlim(xlim)
     if not ylim is None:
         plt.ylim(ylim)
@@ -346,5 +367,6 @@ def plot_pdos(
         plt.ylim((-1, y_max * 1.1))
     plt.legend()
     if is_save:
-        plt.savefig(f"{pdos_dir_path}/pdos.png", dpi=200, bbox_inches="tight")
-    plt.show()
+        plt.savefig(savefig_path, dpi=200, bbox_inches="tight")
+    if is_plot:
+        plt.show()
