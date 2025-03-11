@@ -236,6 +236,7 @@ def band_plot(
     savefig_path=None,
     ylim=[-5, 5],
 ):
+    plt.clf()
     if is_save and (savefig_path is None):
         raise ValueError(f"Error: if save pic, need savefig_path")
     with open(gnu_path, "r") as bands_gnu:
@@ -282,6 +283,7 @@ def plot_pdos(
     is_plot=False,
     color_dict=None,
 ):
+    plt.clf()
     if is_save and (savefig_path is None):
         raise ValueError(f"Error: if save pic, need savefig_path")
     y_max = -1
