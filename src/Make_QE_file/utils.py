@@ -211,26 +211,39 @@ def read_EFermi(output_path):
     raise ValueError(f"Error: Fermi energy not found in {output_path}.")
 
 
-def read_highest_occupied(gnu_path, EFermi, ymin=-5):
-    with open(gnu_path, "r") as bands_gnu:
-        data = bands_gnu.readlines()
-        separate_index = [-1]
-        separate_index += [i for i, j in enumerate(data) if len(j.split()) == 0]
-        x = np.array([float(data[i].split()[0]) for i in range(separate_index[0] + 1, separate_index[1])])
-        y = np.empty((len(separate_index) - 1, x.shape[0]), dtype="float64")
-        for t in range(len(separate_index) - 1):
-            for i, j in enumerate(range(separate_index[t] + 1, separate_index[t + 1])):
-                y[t, i] = float(data[j].split()[1])
-        y_ = np.sort(y[y - EFermi > ymin])
-        highest_occupied = y_[np.argmax(np.diff(y_))]
-    return highest_occupied
+def read_highest_occupied(output_path):
+    with open(output_path, "r") as output:
+        data = output.readlines()
+        for i in range(len(data)):
+            # highest occupied, lowest unoccupied level (ev):    10.0904   10.6895
+            # highest occupied level (ev):    10.0899
+            if "highest occupied, lowest unoccupied level" in data[i]:
+                _split = data[i].replace("highest occupied, lowest unoccupied level", "").split()
+                for j in range(len(_split)):
+                    try:
+                        highest_occupied_level = float(_split[j])
+                        break
+                    except:
+                        None
+                return highest_occupied_level
+            elif "highest occupied level" in data[i]:
+                _split = data[i].replace("highest occupied level", "").split()
+                for j in range(len(_split)):
+                    try:
+                        highest_occupied_level = float(_split[j])
+                        break
+                    except:
+                        None
+                return highest_occupied_level
+    raise ValueError(f"Error: highest occupied level not found in {output_path}.")
 
 
 def band_plot(
     gnu_path,
     k_point_divisions,
     brilloin_zone_path,
-    EFermi,
+    EFermi=None,
+    highest_occupied=None,
     is_save=False,
     is_plot=False,
     savefig_path=None,
@@ -250,8 +263,14 @@ def band_plot(
                 y[t, i] = float(data[j].split()[1])
         y_ = np.sort(y[y - EFermi > ylim[0]])
         highest_occupied = y_[np.argmax(np.diff(y_))]
-        # plt.plot(x,y.T-EFermi)
-        plt.plot(x, y.T - highest_occupied)
+        if not highest_occupied is None:
+            plt.plot(x, y.T - highest_occupied)
+            plt.ylabel("E - highest_occupied_level (eV)", fontsize="xx-large")
+        elif not EFermi is None:
+            plt.plot(x, y.T - EFermi)
+            plt.ylabel("E - EFermi (eV)", fontsize="xx-large")
+        else:
+            raise ValueError(f"Error: need set highest_occupied or EFermi")
     index = 0
     for i in range(len(brilloin_zone_path)):
         plt.vlines(x[index], ylim[0], ylim[1], color="black")
@@ -262,7 +281,6 @@ def band_plot(
             text = r"$\Sigma$"
         plt.text(x[index], ylim[0] - 0.5, text, va="top", ha="center", fontsize="xx-large")
         index += k_point_divisions[i]
-    plt.ylabel("E - EFermi (eV)", fontsize="xx-large")
     plt.xlim(np.min(x), np.max(x))
     plt.ylim(ylim)
     plt.tick_params(labelbottom=False, bottom=False)
@@ -274,7 +292,8 @@ def band_plot(
 
 def plot_pdos(
     pdos_dir_path,
-    highest_occupied,
+    highest_occupied=None,
+    EFermi=None,
     plot_list=["pdos"],
     xlim=[-10, 10],
     savefig_path=None,
@@ -286,6 +305,14 @@ def plot_pdos(
     plt.clf()
     if is_save and (savefig_path is None):
         raise ValueError(f"Error: if save pic, need savefig_path")
+    if not highest_occupied is None:
+        border = highest_occupied
+        plt.xlabel("E - highest_occupied_level (eV)")
+    elif not EFermi is None:
+        border = EFermi
+        plt.xlabel("E - EFermi (eV)")
+    else:
+        raise ValueError(f"Error: need set highest_occupied or EFermi")
     y_max = -1
     # plot_list => dos, pdos, tot_pdos, tot_pdos, tot_dos
     if "dos" in plot_list:
@@ -300,10 +327,10 @@ def plot_pdos(
             x = np.array([float(data[i].split()[0]) for i in range(1, len(data) - 1)])
             y = np.array([float(data[i].split()[1]) for i in range(1, len(data) - 1)])
             integral_y = np.array([float(data[i].split()[2]) for i in range(1, len(data) - 1)])
-        TF = (xlim[0] < x - highest_occupied) & (x - highest_occupied < xlim[1])
-        plt.plot(x - highest_occupied, y.T, label="dos")
+        TF = (xlim[0] < x - border) & (x - border < xlim[1])
+        plt.plot(x - border, y.T, label="dos")
         y_max = max(y_max, np.max(y.T[TF]))
-        plt.plot(x - highest_occupied, integral_y.T, label="integral dos")
+        plt.plot(x - border, integral_y.T, label="integral dos")
         y_max = max(y_max, np.max(integral_y.T[TF]))
     if "pdos" in plot_list:
         files = glob.glob(f"{pdos_dir_path}/*_wfc*")
@@ -315,7 +342,7 @@ def plot_pdos(
         with open(files[0]) as pdos:
             data = pdos.readlines()
             x = np.array([float(data[i].split()[0]) for i in range(1, len(data) - 1)])
-        TF = (xlim[0] < x - highest_occupied) & (x - highest_occupied < xlim[1])
+        TF = (xlim[0] < x - border) & (x - border < xlim[1])
         dict_y = {}
         for i, j in enumerate(files):
             with open(j, "r") as pdos:
@@ -326,11 +353,11 @@ def plot_pdos(
                     dict_y[elements[i]] = np.array([float(data[t].split()[1]) for t in range(1, len(data) - 1)])
         if isinstance(color_dict, dict):
             for i in dict_y.keys():
-                plt.plot(x - highest_occupied, dict_y[i].T, label=i, c=color_dict[i])
+                plt.plot(x - border, dict_y[i].T, label=i, c=color_dict[i])
                 y_max = max(y_max, np.max(dict_y[i].T[TF]))
         else:
             for i in dict_y.keys():
-                plt.plot(x - highest_occupied, dict_y[i].T, label=i)
+                plt.plot(x - border, dict_y[i].T, label=i)
                 y_max = max(y_max, np.max(dict_y[i].T[TF]))
     if "tot_pdos" in plot_list:
         tot_pdos_path = f"{pdos_dir_path}/*.pdos_tot"
@@ -343,8 +370,8 @@ def plot_pdos(
             data = dos.readlines()
             x = np.array([float(data[i].split()[0]) for i in range(1, len(data) - 1)])
             y = np.array([float(data[i].split()[2]) for i in range(1, len(data) - 1)])
-        plt.plot(x - highest_occupied, y.T, label="tot pdos")
-        TF = (xlim[0] < x - highest_occupied) & (x - highest_occupied < xlim[1])
+        plt.plot(x - border, y.T, label="tot pdos")
+        TF = (xlim[0] < x - border) & (x - border < xlim[1])
         y_max = max(y_max, np.max(y.T[TF]))
     if "tot_dos" in plot_list:
         tot_pdos_path = f"{pdos_dir_path}/*.pdos_tot"
@@ -357,10 +384,9 @@ def plot_pdos(
             data = dos.readlines()
             x = np.array([float(data[i].split()[0]) for i in range(1, len(data) - 1)])
             y = np.array([float(data[i].split()[1]) for i in range(1, len(data) - 1)])
-        plt.plot(x - highest_occupied, y.T, label="tot dos")
-        TF = (xlim[0] < x - highest_occupied) & (x - highest_occupied < xlim[1])
+        plt.plot(x - border, y.T, label="tot dos")
+        TF = (xlim[0] < x - border) & (x - border < xlim[1])
         y_max = max(y_max, np.max(y.T[TF]))
-    plt.xlabel("E - EFermi (eV)")
     plt.ylabel("PDoS")
     plt.xlim(xlim)
     if not ylim is None:
