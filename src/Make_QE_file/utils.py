@@ -261,8 +261,6 @@ def band_plot(
         for t in range(len(separate_index) - 1):
             for i, j in enumerate(range(separate_index[t] + 1, separate_index[t + 1])):
                 y[t, i] = float(data[j].split()[1])
-        y_ = np.sort(y[y - EFermi > ylim[0]])
-        highest_occupied = y_[np.argmax(np.diff(y_))]
         if not highest_occupied is None:
             plt.plot(x, y.T - highest_occupied)
             plt.ylabel("E - highest_occupied_level (eV)", fontsize="xx-large")
