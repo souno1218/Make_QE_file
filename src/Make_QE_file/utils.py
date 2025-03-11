@@ -360,8 +360,8 @@ def plot_pdos(
         plt.plot(x - highest_occupied, y.T, label="tot dos")
         TF = (xlim[0] < x - highest_occupied) & (x - highest_occupied < xlim[1])
         y_max = max(y_max, np.max(y.T[TF]))
-    plt.xlabel("PDoS")
-    plt.ylabel("E - EFermi (eV)")
+    plt.xlabel("E - EFermi (eV)")
+    plt.ylabel("PDoS")
     plt.xlim(xlim)
     if not ylim is None:
         plt.ylim(ylim)
