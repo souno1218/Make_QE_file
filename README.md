@@ -42,10 +42,10 @@ Explain how to run the automated tests for this system
 
 ## Built With
 
-* [Pymatgen](https://pymatgen.org) - Used to obtain the Hermann-Mauguin notation from the space group number.
+* [moyopy](https://spglib.github.io/moyo/python/index.html) - Used to obtain the Hermann-Mauguin notation from the space group number.
 * [numpy](https://numpy.org) - Used for various calculations.
 * [pandas](https://pandas.pydata.org) - Used to .
-* [matplotlib]() - Used to plot.
+* [matplotlib](https://matplotlib.org) - Used to plot.
 
 
 

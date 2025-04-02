@@ -1,12 +1,14 @@
-from pymatgen.symmetry.groups import SpaceGroup
+from moyopy import SpaceGroupType
 import datetime
+
+# from pymatgen.symmetry.groups import SpaceGroup
 
 
 def write_new_cif(out_path, material_name, params_structure):
     date = str(datetime.datetime.now().strftime("%Y-%m-%d"))
     time = str(datetime.datetime.now().strftime("%H:%M:%S"))
     space_group_number = params_structure["space_group_number"]
-    hm_symbol = SpaceGroup.from_int_number(space_group_number).symbol  # Hermann-Mauguin 記号を取得
+    hm_symbol = SpaceGroupType(space_group_number).hm_short  # Hermann-Mauguin 記号を取得
     with open(out_path, "w") as f:
         f.write("#======================================================================)\n")
         f.write("# CRYSTAL DATA\n")
