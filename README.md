@@ -1,18 +1,15 @@
 # Make_QE_file
+This is a collection of Python scripts that partially automate the creation of input files required for Quantum Espresso calculations.   
+The tool provides the following functionalities:   
+ - Generate input files from CIF files
+ - Read structures from relax and vc-relax output files and create the next input file
+ - Read structures from relax and vc-relax output files and convert them to CIF format
+ - Plot band structures, PDOS, and other related data
 
-Quantum Espresso calculations first require an input file.   
-Since it is time-consuming to create such a file by copy-and-paste from a crystal information file (Cif), etc., we have scripted it in python.
-
-- cif2qe_in
-  - Create QE input file from Cif (Only relax and vc-relax are currently confirmed.)
-- qe_out2in
-  - Create QE input file from QE output file (Only relax and vc-relax are currently confirmed.)
-  - Used for relax->vc-relax, etc.
-- qe_out2cif
-  - Create Cif from QE output file (Only relax and vc-relax are currently confirmed.)
-
+The intended use case is when a calculation has already converged for one material, and there are many similar materials for which you want to run calculations under the same conditions.   
+Although it can also be used for the initial calculation of a single material, the script is primarily designed to reuse successful conditions efficiently.   
 I was able to use it for my application, but I think there are cases where it may not work.   
-Please modify it by yourself.
+Please modify it by yourself.   
 
 ## Getting Started
 
@@ -35,7 +32,7 @@ Download and Installation
  pip install git+https://github.com/souno1218/Make_QE_file.git
 ```
 
-pymatgen,numpy,pandas will be installed automatically when not present
+pymatgen, numpy, pandas, matplotlib will be installed automatically when not present
 
 ## Running
 
@@ -45,9 +42,10 @@ Explain how to run the automated tests for this system
 
 ## Built With
 
-* [Pymatgen](https://pymatgen.org) - Used to read Cif
-* [numpy](https://numpy.org) - Used for various calculations
-* [pandas](https://pandas.pydata.org) - Used to read csv
+* [Pymatgen](https://pymatgen.org) - Used to obtain the Hermann-Mauguin notation from the space group number.
+* [numpy](https://numpy.org) - Used for various calculations.
+* [pandas](https://pandas.pydata.org) - Used to .
+* [matplotlib]() - Used to plot.
 
 
 

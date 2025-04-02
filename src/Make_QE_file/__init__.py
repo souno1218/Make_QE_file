@@ -1,4 +1,3 @@
-from .check_output import check_output
 from .write_new_cif import write_new_cif
 from .cif_to_params import cif_to_params
 from .make_input import make_input
