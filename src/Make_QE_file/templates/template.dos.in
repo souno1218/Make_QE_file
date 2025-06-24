@@ -1,8 +1,8 @@
 &dos
-   outdir = './work/',              # change
+   outdir = './work/',
    prefix = 'structure_name',       # change
    fildos = 'structure_name.dos',   # change
-   emax   =  50
-   emin   = -50
-   deltae =  0.01
+   emax   =  50                     # can change
+   emin   = -50                     # can change
+   deltae =  0.01                   # can change
 /

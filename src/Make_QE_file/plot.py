@@ -2,66 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import glob, re
 
-
-def read_EFermi(output_path):
-    with open(output_path, "r") as output:
-        data = output.readlines()
-        for i in range(len(data)):
-            #  E (eV)   dos(E)     Int dos(E) EFermi =   10.292 eV
-            # the Fermi energy is    11.7660 ev
-            if "the Fermi energy is" in data[i]:
-                _split = data[i].replace("the Fermi energy is", "").split()
-                for j in range(len(_split)):
-                    try:
-                        EFermi = float(_split[j])
-                        break
-                    except:
-                        None
-                return EFermi
-            elif "EFermi =" in data[i]:
-                _split = data[i].split()
-                EFermi_index = -1
-                for j in range(len(_split)):
-                    if "EFermi" in _split[j]:
-                        EFermi_index = j
-                        break
-                for j in range(EFermi_index + 1, len(_split)):
-                    try:
-                        EFermi = float(_split[j])
-                        break
-                    except:
-                        None
-                return EFermi
-    raise ValueError(f"Error: Fermi energy not found in {output_path}.")
-
-
-def read_highest_occupied(output_path):
-    with open(output_path, "r") as output:
-        data = output.readlines()
-        for i in range(len(data)):
-            # highest occupied, lowest unoccupied level (ev):    10.0904   10.6895
-            # highest occupied level (ev):    10.0899
-            if "highest occupied, lowest unoccupied level" in data[i]:
-                _split = data[i].replace("highest occupied, lowest unoccupied level", "").split()
-                for j in range(len(_split)):
-                    try:
-                        highest_occupied_level = float(_split[j])
-                        break
-                    except:
-                        None
-                return highest_occupied_level
-            elif "highest occupied level" in data[i]:
-                _split = data[i].replace("highest occupied level", "").split()
-                for j in range(len(_split)):
-                    try:
-                        highest_occupied_level = float(_split[j])
-                        break
-                    except:
-                        None
-                return highest_occupied_level
-    raise ValueError(f"Error: highest occupied level not found in {output_path}.")
-
-
 def plot_band(
     gnu_path,
     k_point_divisions,

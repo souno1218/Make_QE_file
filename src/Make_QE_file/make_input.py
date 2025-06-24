@@ -19,7 +19,13 @@ def make_input(
     brilloin_zone_path=None,  # only use in bands
     k_point_divisions=None,  # only use in bands
     ibrav=None,  # only use in bands, Some versions　of QE may require ibrav
-    deltae=None,  # only use in projwfc and dos, Some versions　of QE may require ibrav
+    emax=None,  # only use in projwfc and dos
+    emin=None,  # only use in projwfc and dos
+    deltae=None,  # only use in projwfc and dos
+    # emax, emin, deltae
+    # If provided, these values override; otherwise, values from the template file are used.
+    # If not found in the template, default values (see below) are applied.
+    # emax, emin, deltae = 50, -50, 0.01
 ):
     check_args(False, calc=calc, save_path=save_path, prefix=prefix)
     match calc:
@@ -53,11 +59,11 @@ def make_input(
             check_args(True, template_path=template_path)
             make_input_band_x(save_path, prefix, template_path=template_path)
         case "projwfc":
-            check_args(True, deltae=deltae, template_path=template_path)
-            make_input_projwfc(save_path, prefix, deltae=deltae, template_path=template_path)
+            check_args(True, emax=emax, emin=emin, deltae=deltae, template_path=template_path)
+            make_input_projwfc(save_path, prefix, emax=emax, emin=emin, deltae=deltae, template_path=template_path)
         case "dos":
-            check_args(True, deltae=deltae, template_path=template_path)
-            make_input_dos(save_path, prefix, deltae=deltae, template_path=template_path)
+            check_args(True, emax=emax, emin=emin, deltae=deltae, template_path=template_path)
+            make_input_dos(save_path, prefix, emax=emax, emin=emin, deltae=deltae, template_path=template_path)
         case _:
             raise Exception(f"not support this calc : {calc}")  #'md','vc-md' not support
 
@@ -324,7 +330,7 @@ def sub_make_input(
     return base
 
 
-def make_input_projwfc(save_path, prefix, deltae=None, template_path=None):
+def make_input_projwfc(save_path, prefix, emax=None, emin=None, deltae=None, template_path=None):
     # https://www.quantum-espresso.org/Doc/INPUT_DOS.html
     if template_path is None:
         templates_path = os.fspath(pkg_resources.path("Make_QE_file", "templates"))
@@ -340,26 +346,67 @@ def make_input_projwfc(save_path, prefix, deltae=None, template_path=None):
             if not "=" in base[i]:
                 start_index = i
                 break
-    drop_list = ["OUTDIR", "PREFIX", "DELTAE"]
+
     for i in range(len(base) - 1, start_index, -1):
-        for j in drop_list:
+        for j in "PREFIX":
             if j in base[i].upper():
                 base.pop(i)
-    txt = " " * n_flont_space + "outdir = './work/',\n"
-    base.insert(start_index + 1, txt)
+
+    check_exist_emax, check_exist_emin, check_exist_deltae = False, False, False
+    for i in range(len(base) - 1, start_index, -1):
+        if "EMAX" in base[i].upper():
+            check_exist_emax = True
+            if not emax is None:
+                base.pop(i)
+        if "EMIN" in base[i].upper():
+            check_exist_emin = True
+            if not emin is None:
+                base.pop(i)
+        if "DELTAE" in base[i].upper():
+            check_exist_deltae = True
+            if not deltae is None:
+                base.pop(i)
+
     txt = " " * n_flont_space + f"prefix='{prefix}',\n"
-    base.insert(start_index + 2, txt)
-    if deltae != None:
+    base.insert(start_index + 1, txt)
+    n = 2
+    if not emax is None:
+        txt = " " * n_flont_space + f"emax = {emax},\n"
+        base.insert(start_index + n, txt)
+        n += 1
+    elif not check_exist_emax:
+        emax = 50.0
+        txt = " " * n_flont_space + f"emax = {emax},\n"
+        base.insert(start_index + n, txt)
+        n += 1
+
+    if not emin is None:
+        txt = " " * n_flont_space + f"emin = {emin},\n"
+        base.insert(start_index + n, txt)
+        n += 1
+    elif not check_exist_emin:
+        emin = -50.0
+        txt = " " * n_flont_space + f"emin = {emin},\n"
+        base.insert(start_index + n, txt)
+        n += 1
+
+    if not deltae is None:
+        txt = " " * n_flont_space + f"deltae = {deltae},\n"
+        base.insert(start_index + n, txt)
+        n += 1
+    elif not check_exist_deltae:
         deltae = 0.01
-    txt = " " * n_flont_space + f"deltae = {deltae},\n"
-    base.insert(start_index + 3, txt)
+        txt = " " * n_flont_space + f"deltae = {deltae},\n"
+        base.insert(start_index + n, txt)
+        n += 1
+
     with open(save_path, "wb") as input:
         input.write("".join(base).encode("utf-8"))
     # print("make_input_projwfc Done", flush=True)
     # print(save_path, flush=True)
 
 
-def make_input_dos(save_path, prefix, deltae=None, template_path=None):
+def make_input_dos(save_path, prefix, emax=None, emin=None, deltae=None, template_path=None):
     # https://www.quantum-espresso.org/Doc/INPUT_DOS.html
     if template_path is None:
         templates_path = os.fspath(pkg_resources.path("Make_QE_file", "templates"))
@@ -375,21 +422,62 @@ def make_input_dos(save_path, prefix, deltae=None, template_path=None):
             if not "=" in base[i]:
                 start_index = i
                 break
-    drop_list = ["OUTDIR", "PREFIX", "FILDOS"]
+    drop_list = ["PREFIX", "FILDOS"]
     for i in range(len(base) - 1, start_index, -1):
         for j in drop_list:
             if j in base[i].upper():
                 base.pop(i)
-    txt = " " * n_flont_space + "outdir = './work/',\n"
-    base.insert(start_index + 1, txt)
+
+    check_exist_emax, check_exist_emin, check_exist_deltae = False, False, False
+    for i in range(len(base) - 1, start_index, -1):
+        if "EMAX" in base[i].upper():
+            check_exist_emax = True
+            if not emax is None:
+                base.pop(i)
+        if "EMIN" in base[i].upper():
+            check_exist_emin = True
+            if not emin is None:
+                base.pop(i)
+        if "DELTAE" in base[i].upper():
+            check_exist_deltae = True
+            if not deltae is None:
+                base.pop(i)
+
     txt = " " * n_flont_space + f"prefix='{prefix}',\n"
-    base.insert(start_index + 2, txt)
+    base.insert(start_index + 1, txt)
     txt = " " * n_flont_space + f"fildos='{prefix}.dos',\n"
-    base.insert(start_index + 3, txt)
-    if deltae != None:
+    base.insert(start_index + 2, txt)
+    n = 3
+    if not emax is None:
+        txt = " " * n_flont_space + f"emax = {emax},\n"
+        base.insert(start_index + n, txt)
+        n += 1
+    elif not check_exist_emax:
+        emax = 50.0
+        txt = " " * n_flont_space + f"emax = {emax},\n"
+        base.insert(start_index + n, txt)
+        n += 1
+
+    if not emin is None:
+        txt = " " * n_flont_space + f"emin = {emin},\n"
+        base.insert(start_index + n, txt)
+        n += 1
+    elif not check_exist_emin:
+        emin = -50.0
+        txt = " " * n_flont_space + f"emin = {emin},\n"
+        base.insert(start_index + n, txt)
+        n += 1
+
+    if not deltae is None:
+        txt = " " * n_flont_space + f"deltae = {deltae},\n"
+        base.insert(start_index + n, txt)
+        n += 1
+    elif not check_exist_deltae:
         deltae = 0.01
-    txt = " " * n_flont_space + f"deltae = {deltae},\n"
-    base.insert(start_index + 4, txt)
+        txt = " " * n_flont_space + f"deltae = {deltae},\n"
+        base.insert(start_index + n, txt)
+        n += 1
+
     with open(save_path, "wb") as input:
         input.write("".join(base).encode("utf-8"))
     # print("make_input_dos Done", flush=True)
@@ -412,17 +500,15 @@ def make_input_band_x(save_path, prefix, template_path=None):
             if not "=" in base[i]:
                 start_index = i
                 break
-    drop_list = ["OUTDIR", "PREFIX", "FILBAND"]
+    drop_list = ["PREFIX", "FILBAND"]
     for i in range(len(base) - 1, start_index, -1):
         for j in drop_list:
             if j in base[i].upper():
                 base.pop(i)
-    txt = " " * n_flont_space + "outdir = './work/',\n"
-    base.insert(start_index + 1, txt)
     txt = " " * n_flont_space + f"prefix='{prefix}',\n"
-    base.insert(start_index + 2, txt)
+    base.insert(start_index + 1, txt)
     txt = " " * n_flont_space + f"filband = {prefix},\n"
-    base.insert(start_index + 3, txt)
+    base.insert(start_index + 2, txt)
     with open(save_path, "wb") as input:
         input.write("".join(base).encode("utf-8"))
     # print("make_input_bands Done", flush=True)
