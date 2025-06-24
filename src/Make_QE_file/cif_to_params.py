@@ -52,6 +52,12 @@ def cif_to_params(import_cif_path):
                         params_cif["space_group_number"] = int(j)
                     except:
                         None
+            if "_symmetry_Int_Tables_number" in cif_data[i]:
+                for j in cif_data[i].split():
+                    try:
+                        params_cif["space_group_number"] = int(j)
+                    except:
+                        None
             if "loop_" in cif_data[i]:
                 list_loop_index.append(i)
         list_loop_index.append(len(cif_data))
@@ -59,34 +65,53 @@ def cif_to_params(import_cif_path):
             for j in range(list_loop_index[i], list_loop_index[i + 1]):
                 if "_atom_site" in cif_data[j]:
                     loop_index = list_loop_index[i]
-        label_ATOMIC_POSITIONS = []
+        loop_label_2_index = {}
+        len_labels = 0
         for i in range(loop_index + 1, len(cif_data)):
+            if "_atom_site_label" in cif_data[i]:
+                loop_label_2_index["label"] = len_labels
+            elif "_atom_site_type_symbol" in cif_data[i]:
+                loop_label_2_index["symbol"] = len_labels
+            elif "_atom_site_fract_x" in cif_data[i]:
+                loop_label_2_index["str_x"] = len_labels
+            elif "_atom_site_fract_y" in cif_data[i]:
+                loop_label_2_index["str_y"] = len_labels
+            elif "_atom_site_fract_z" in cif_data[i]:
+                loop_label_2_index["str_z"] = len_labels
             if "_atom_site" in cif_data[i]:
-                label_ATOMIC_POSITIONS.append(cif_data[i].split()[0])
-        df_ATOMIC_POSITIONS = pd.DataFrame(columns=["label", "symbol", "str_x", "str_y", "str_z"])
+                len_labels += 1
+        labels = []
         for i in range(loop_index + 1, len(cif_data)):
-            if len(cif_data[i].split()) == len(label_ATOMIC_POSITIONS):
+            if len(cif_data[i].split()) == len_labels:
                 one_data = cif_data[i].split()
-                one_ATOMIC_POSITIONS = []
-                index = label_ATOMIC_POSITIONS.index("_atom_site_label")
-                one_ATOMIC_POSITIONS.append(one_data[index])
-                index = label_ATOMIC_POSITIONS.index("_atom_site_type_symbol")
-                one_ATOMIC_POSITIONS.append(one_data[index])
-                index = label_ATOMIC_POSITIONS.index("_atom_site_fract_x")
-                str_x = "{:.05f}".format(round_half(one_data[index]))
+                labels.append(one_data[loop_label_2_index["label"]])
+        n = 0
+        for i in range(len(labels)):
+            while labels[i] in [*labels[:i], *labels[i+1:]]:
+                labels[i] = f'{labels[i]}_{n}'
+                n += 1
+
+        df_ATOMIC_POSITIONS = pd.DataFrame(columns=["label", "symbol", "str_x", "str_y", "str_z"])
+        n = 0
+        for i in range(loop_index + 1, len(cif_data)):
+            if len(cif_data[i].split()) == len_labels:
+                one_data = cif_data[i].split()
+                one_ATOMIC_POSITIONS = [labels[n]]
+                one_ATOMIC_POSITIONS.append(one_data[loop_label_2_index["symbol"]])
+                str_x = "{:.05f}".format(round_half(one_data[loop_label_2_index["str_x"]]))
                 one_ATOMIC_POSITIONS.append(str_x)
-                index = label_ATOMIC_POSITIONS.index("_atom_site_fract_y")
-                str_y = "{:.05f}".format(round_half(one_data[index]))
+                str_y = "{:.05f}".format(round_half(one_data[loop_label_2_index["str_y"]]))
                 one_ATOMIC_POSITIONS.append(str_y)
-                index = label_ATOMIC_POSITIONS.index("_atom_site_fract_z")
-                str_z = "{:.05f}".format(round_half(one_data[index]))
+                str_z = "{:.05f}".format(round_half(one_data[loop_label_2_index["str_z"]]))
                 one_ATOMIC_POSITIONS.append(str_z)
-                df_ATOMIC_POSITIONS.loc[one_ATOMIC_POSITIONS[0]] = one_ATOMIC_POSITIONS
+                df_ATOMIC_POSITIONS.loc[labels[n]] = one_ATOMIC_POSITIONS
+                n += 1
         params_cif["df_ATOMIC_POSITIONS"] = df_ATOMIC_POSITIONS
+
     # check
     key_check = ["a", "b", "c", "alpha", "beta", "gamma", "space_group_number", "df_ATOMIC_POSITIONS"]
     for i in key_check:
         if not i in params_cif.keys():
-            raise Exception("not found param {i} in cif")
+            raise Exception(f"not found param {i} in cif")
     check_params(params_cif)
     return params_cif
