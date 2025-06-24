@@ -36,13 +36,11 @@ pip install git+https://github.com/souno1218/Make_QE_file.git
 4. plot   
 
 です(自分は数字ごとにディレクトリを分けてました)。   
-
 `how_to_use/auto.py`では上記の流れでの各関数の使用方法を書いています。   
 
 ## 使用方法と機能
 
 ---
-
 ### cif_to_params(import_cif_path)
 #### 概要
 cifから結晶情報のdictを作成します。cifには以下の情報が必要です。   
@@ -58,22 +56,18 @@ cifから結晶情報のdictを作成します。cifには以下の情報が必�
 - _atom_site_fract_x
 - _atom_site_fract_y
 - _atom_site_fract_z
-
 #### Parameters:
 - `import_cif_path` (str)   
   参照するcifのパス   
-
 #### Returns:
 - `params_cif` (dict)   
   結晶情報、これからinputを作成   
 
 ---
-
 ### make_input(args)
 #### 概要
 cif_to_paramsで作成したような結晶情報のdictからinputを作成します。   
 構造は{crystal_sg}でinputファイルに記入されるため、`params_structure`にはspace_group_numberが必要になります。   
-
 #### Parameters:
 - `calc` (str)   
   対応している`calc`の値はrelax, vc-relax, scf, nscf, projwfc, dos, bands, band_xです(必須)   
@@ -131,12 +125,10 @@ cif_to_paramsで作成したような結晶情報のdictからinputを作成し�
 `emax, emin, deltae = 50, -50, 0.01`   
 
 ---
-
 ### output_to_params(calc, import_out_path, base_params)
 #### 概要
 relax,vc-relax計算のoutputで結晶情報を更新します。   
 その際、計算前のparams(つまりcif_to_paramsの返り値)を元にして作るので`base_params`にはそれを入れます。   
-
 #### Parameters:
 - `calc` (str)   
   対応している`calc`の値はrelax, vc-relaxです   
@@ -144,81 +136,66 @@ relax,vc-relax計算のoutputで結晶情報を更新します。
   outputファイルパス   
 - `base_params` (dict)   
   元となった構造、最初のcif_to_paramsの返り値など   
-
 #### Returns:
 - `return_params` (dict)   
   結晶情報、これから次のinputを作成したり、write_new_cifに入れてcifを作ったりする   
 
 ---
-
 ### write_new_cif(out_path, material_name, params_structure)
 #### 概要
-relax,vc-relax計算のoutputから結晶情報を作成します。   
-その際、計算前のparams(つまりcif_to_paramsの返り値)を元にして作るので`base_params`にはそれを入れます。   
-
+output_to_paramsなどで更新した構造から新しいcifを作成します。   
 #### Parameters:
 - `out_path` (str)   
-  出力するoutputファイルパス   
+  出力するcifのoutputファイルパス   
 - `material_name` (str)   
   物質名など
 - `params_structure` (dict)   
   `output_to_params`などで更新した構造   
 
 ---
-
 ### output_to_nbnd(import_out_path)
 #### 概要
 scf計算のoutputから計算に使用したnbndを探して出力します。   
 `number of Kohn-Sham states`が該当する部分です。   
 この関数の返り値はcalc = nscf, bandsでinputファイルを作成するときに使用します。   
-
 #### Parameters:
 - `import_out_path` (str)   
   参照するoutputファイルパス   
-
 #### Returns:
 - `nbnd` (int)   
   scf計算で計算に使用したnbnd   
 
 ---
-
 ### get_EFermi(output_path)
 #### 概要
 計算結果のファイルからフェルミエネルギーを探して出力します。   
 `the Fermi energy is`と`EFermi`が該当する部分です。   
 この関数の返り値はplot_bandとplot_pdosで使用します。   
-
 #### Parameters:
 - `output_path` (str)   
   参照するoutputファイルパス   
-
 #### Returns:
 - `EFermi` (float)   
   EFermiの値   
 
 ---
-
 ### get_highest_occupied(output_path)
 #### 概要
 計算結果のファイルからhighest occupied levelを探して出力します。   
 `highest occupied, lowest unoccupied level`と`highest occupied level`が該当する部分です。   
 この関数の返り値はplot_bandとplot_pdosで使用します。   
-
 #### Parameters:
 - `output_path` (str)   
   参照するoutputファイルパス   
-
 #### Returns:
 - `highest_occupied` (float)   
   highest occupied levelの値   
 
 ---
-
 ### plot_band(args)
 #### 概要
 band計算によって作成されるgnuファイルを入れることで、band計算結果をプロットします。   
 基準はhighest occupied levelかEFermiで、どちらかの入力は必須です。   
-
 #### Parameters:
 - `gnu_path` (str)   
   gnuファイルのパス
@@ -245,17 +222,16 @@ band計算によって作成されるgnuファイルを入れることで、band
   y軸のプロットする範囲   
 
 ---
-
 ### plot_pdos(args)
 #### 概要
 band計算を行ったディレクトリで実行することで、band計算結果をプロットします。   
 基準はhighest occupied levelかEFermiで、どちらかの入力は必須です。   
-
 #### Parameters:
 - `pdos_dir_path` (str)   
-  
+  `{pdos_dir_path}/*.dos`や`{pdos_dir_path}/*_wfc*`となっているディレクトリのパス
 - `plot_list=["pdos"]` (list(str))   
-  
+  何をプロットするか、   
+  dos, pdos, tot_pdos, tot_pdos, tot_dosがある。
 - `EFermi` (float)   
   基準として、グラフの0を定める   
   read_EFermiで探した値を入れる   
