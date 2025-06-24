@@ -346,9 +346,9 @@ def make_input_projwfc(save_path, prefix, emax=None, emin=None, deltae=None, tem
             if not "=" in base[i]:
                 start_index = i
                 break
-
+    drop_list = ["PREFIX"]
     for i in range(len(base) - 1, start_index, -1):
-        for j in "PREFIX":
+        for j in drop_list:
             if j in base[i].upper():
                 base.pop(i)
 
