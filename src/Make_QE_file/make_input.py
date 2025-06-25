@@ -89,7 +89,7 @@ def sub_make_input(
     df_ATOMIC_POSITIONS = params_structure["df_ATOMIC_POSITIONS"]
     df_pseudo_path_num_ecut = make_pseudo_path_num_ecut(pseudo_dir, df_ATOMIC_POSITIONS)
     if template_path is None:
-        templates_path = os.fspath(pkg_resources.path("Make_QE_file", "templates"))
+        templates_path = str(pkg_resources.files("Make_QE_file").joinpath("templates"))
         template_path = f"{templates_path}/template.in"
     with open(template_path, "r") as f:
         template = f.readlines()
@@ -297,7 +297,7 @@ def sub_make_input(
         txt += f"{str_xyz[0].rjust(len_x)} {str_xyz[1].rjust(len_y)} {str_xyz[2].rjust(len_z)}"
         if fix:
             is_move = ((xyz * 2**5) % 1 != 0) * 1
-            txt += f"   {is_move[0]} {is_move[1]} {is_move[2]}\n"
+            txt += f"   {is_move[0]} {is_move[1]} {is_move[2]}"
         txt += "\n"
         base.insert(start_index + 1 + i, txt)
         n += 1
@@ -338,7 +338,7 @@ def sub_make_input(
 def make_input_projwfc(save_path, prefix, emax=None, emin=None, deltae=None, template_path=None):
     # https://www.quantum-espresso.org/Doc/INPUT_DOS.html
     if template_path is None:
-        templates_path = os.fspath(pkg_resources.path("Make_QE_file", "templates"))
+        templates_path = str(pkg_resources.files("Make_QE_file").joinpath("templates"))
         template_path = f"{templates_path}/template.projwfc.in"
     with open(template_path, "r") as f:
         template = f.readlines()
@@ -414,7 +414,7 @@ def make_input_projwfc(save_path, prefix, emax=None, emin=None, deltae=None, tem
 def make_input_dos(save_path, prefix, emax=None, emin=None, deltae=None, template_path=None):
     # https://www.quantum-espresso.org/Doc/INPUT_DOS.html
     if template_path is None:
-        templates_path = os.fspath(pkg_resources.path("Make_QE_file", "templates"))
+        templates_path = str(pkg_resources.files("Make_QE_file").joinpath("templates"))
         template_path = f"{templates_path}/template.dos.in"
     with open(template_path, "r") as f:
         template = f.readlines()
@@ -492,7 +492,7 @@ def make_input_dos(save_path, prefix, emax=None, emin=None, deltae=None, templat
 def make_input_band_x(save_path, prefix, template_path=None):
     # https://www.quantum-espresso.org/Doc/INPUT_BANDS.html
     if template_path is None:
-        templates_path = os.fspath(pkg_resources.path("Make_QE_file", "templates"))
+        templates_path = str(pkg_resources.files("Make_QE_file").joinpath("templates"))
         template_path = f"{templates_path}/template.band_x.in"
     with open(template_path, "r") as f:
         template = f.readlines()
