@@ -28,6 +28,7 @@ for i in range(len(list_structure_name)):
 dict_ibrav = {22212 : 7, 22325 : 7, 22426 : 6}
 
 k_fineness_Magnification = 20
+fix = True
 
 pseudo_dir = "/home/hpc/QE_dir/UPF"
 temp_scf = "/home/hpc/QE_dir/templates/template_smearing.in"
@@ -68,6 +69,7 @@ for structure_name in list_structure_name:
             pseudo_dir=pseudo_dir,
             params_structure=params_structure,
             k_fineness_Magnification=k_fineness_Magnification,
+            fix=fix,
             template_path=temp_scf,
         )
         command = f"mpirun -np 32 pw.x <{input_path} >{output_path}"
@@ -91,6 +93,7 @@ for structure_name in list_structure_name:
             pseudo_dir=pseudo_dir,
             params_structure=params_structure,
             k_fineness_Magnification=k_fineness_Magnification,
+            fix=fix,
             template_path=temp_scf,
         )
         command = f"mpirun -np 32 pw.x <{input_path} >{output_path}"

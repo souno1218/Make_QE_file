@@ -95,6 +95,9 @@ cif_to_paramsで作成したような結晶情報のdictからinputを作成し�
   calc = scf,nscf,relax,vc-relaxで使用   
   上記の際にあまりにもk点メッシュ数が少なく(1とか)になる時があるので、最低値を決めます   
   何も指定しない場合calc=nscfで4,その他で2になります   
+- `fix=False` (bool)
+  calc = scf,nscf,relax,vc-relaxで使用   
+  原子を固定するかどうか。   
 - `nbnd=None` (int)   
   calc = nscf, bandsで使用(必須)   
   バンド数で、scf計算で使用したnbndをoutput_to_nbndで読み取り、上記calcで使用   

@@ -15,6 +15,7 @@ def make_input(
     params_structure=None,  # only use in scf,nscf,relax,vc-relax,bands
     min_kpoint=None,  # only use in scf,nscf,relax,vc-relax
     k_fineness_Magnification=None,  # only use in scf,nscf,relax,vc-relax
+    fix=False,  # only use in scf,nscf,relax,vc-relax
     nbnd=None,  # only use in nscf, bands
     brilloin_zone_path=None,  # only use in bands
     k_point_divisions=None,  # only use in bands
@@ -50,6 +51,7 @@ def make_input(
                 template_path=template_path,
                 min_kpoint=min_kpoint,  # only use in scf,nscf,relax,vc-relax
                 k_fineness_Magnification=k_fineness_Magnification,  # only use in scf,nscf,relax,vc-relax
+                fix=fix,  # only use in scf,nscf,relax,vc-relax
                 brilloin_zone_path=brilloin_zone_path,  # only use in bands
                 k_point_divisions=k_point_divisions,  # only use in bands
                 nbnd=nbnd,  # only use in nscf, bands
@@ -77,6 +79,7 @@ def sub_make_input(
     template_path=None,
     min_kpoint=None,  # only use in scf,nscf,relax,vc-relax
     k_fineness_Magnification=None,  # only use in scf,nscf,relax,vc-relax
+    fix=False,  # only use in scf,nscf,relax,vc-relax
     brilloin_zone_path=None,  # only use in bands
     k_point_divisions=None,  # only use in bands
     nbnd=None,  # only use in nscf, bands
@@ -291,9 +294,11 @@ def sub_make_input(
         str_xyz = df_ATOMIC_POSITIONS[["str_x", "str_y", "str_z"]].loc[label].values
         xyz = str_xyz.astype("float")
         txt = " " * n_flont_space + f"{symbol.rjust(len_atom)}   "
-        txt += f"{str_xyz[0].rjust(len_x)} {str_xyz[1].rjust(len_y)} {str_xyz[2].rjust(len_z)}   "
-        is_move = ((xyz * 2**5) % 1 != 0) * 1
-        txt += f"{is_move[0]} {is_move[1]} {is_move[2]}\n"
+        txt += f"{str_xyz[0].rjust(len_x)} {str_xyz[1].rjust(len_y)} {str_xyz[2].rjust(len_z)}"
+        if fix:
+            is_move = ((xyz * 2**5) % 1 != 0) * 1
+            txt += f"   {is_move[0]} {is_move[1]} {is_move[2]}\n"
+        txt += "\n"
         base.insert(start_index + 1 + i, txt)
         n += 1
     for i in index_dict.keys():

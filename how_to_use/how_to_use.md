@@ -93,6 +93,9 @@ The structure will be written into the input file as `{crystal_sg}`, so `params_
     Used with `calc` = scf, nscf, relax, vc-relax.   
     Sets a minimum value when the K-point mesh count becomes too small (e.g., 1).   
     If not specified, it defaults to 4 for `calc=nscf` and 2 for others.   
+  - `fix=False` (bool)
+    sed with `calc` = scf, nscf, relax, vc-relax.   
+    Whether to fix atoms.   
   - `nbnd=None` (int)   
     Used with `calc` = nscf, bands (required).   
     Number of bands. The `nbnd` used in the SCF calculation is read via `output_to_nbnd` and then used for the above `calc` types.   
