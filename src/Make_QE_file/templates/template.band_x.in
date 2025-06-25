@@ -1,6 +1,6 @@
 &bands
    outdir = './work/',
-   prefix = 'structure_name',   # change
-   filband = 'band_structure',  # change
+   prefix = 'structure_name',   ! change
+   filband = 'band_structure',  ! change
    lsym = .true.
 /
