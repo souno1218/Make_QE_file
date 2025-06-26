@@ -208,7 +208,7 @@ def check_output(import_out_path, prefix=None, figsize=(12, 4), save_path=None):
             continue
 
         ax.plot(range(len(data_list)), data_list, color=color)
-        
+
         # X軸の目盛りを整数にする設定
         ax.xaxis.set_major_locator(mticker.MaxNLocator(integer=True))
 
@@ -239,7 +239,7 @@ def check_output(import_out_path, prefix=None, figsize=(12, 4), save_path=None):
 
             # X軸方向のオフセットは右に
             ax.text(first_idx + current_x_offset, first_val + text_first_y_offset,
-                    f'{first_val}',
+                    f'{first_val:.6f}',
                     ha='left', va=first_va, fontsize=8, color='blue',
                     bbox=dict(boxstyle='round,pad=0.2', fc='yellow', ec='none', alpha=0.7))
             ax.scatter(first_idx, first_val, color=color, s=20, zorder=5)
@@ -257,7 +257,7 @@ def check_output(import_out_path, prefix=None, figsize=(12, 4), save_path=None):
 
             # X軸方向のオフセットは左に
             ax.text(last_idx - current_x_offset, last_val + text_last_y_offset,
-                    f'{last_val}',
+                    f'{last_val:.6f}',
                     ha='right', va=last_va, fontsize=8, color='blue',
                     bbox=dict(boxstyle='round,pad=0.2', fc='yellow', ec='none', alpha=0.7))
             ax.scatter(last_idx, last_val, color=color, s=20, zorder=5)
@@ -286,7 +286,7 @@ def check_output(import_out_path, prefix=None, figsize=(12, 4), save_path=None):
                 text_y_pos = 0.02
 
             ax.text(0.98, text_y_pos, # Xは右端に固定、Yは動的に決定
-                    f'Diff: {data_range}',
+                    f'Diff: {data_range:.6f}',
                     transform=ax.transAxes,
                     ha='right', va=text_va, fontsize=9,
                     bbox=dict(boxstyle='round,pad=0.3', fc='wheat', ec='k', lw=0.5, alpha=0.7))
