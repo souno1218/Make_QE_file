@@ -291,7 +291,6 @@ def check_output(import_out_path, prefix=None, figsize=(12, 4), save_path=None):
                     ha='right', va=text_va, fontsize=9,
                     bbox=dict(boxstyle='round,pad=0.3', fc='wheat', ec='k', lw=0.5, alpha=0.7))
 
-        ax.legend()
         ax.grid(True)
         ax.set_xlabel("Step") # 共通のX軸ラベル
 
