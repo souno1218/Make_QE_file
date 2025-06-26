@@ -183,6 +183,14 @@ def check_output(import_out_path, prefix=None, figsize=(12, 4)):
             (list_Total_force, "Total Force", "g"),
             (list_P, "Pressure (kbar)", "b")
         ]
+
+
+        # テキスト表示のオフセット量（データ座標単位）
+        # Y軸方向のオフセットをグラフ高さの2%とする
+        text_offset_y_factor = 0.02
+        # X軸方向のオフセットをグラフ幅の1%とする
+        text_offset_x_factor = 0.01
+
         for idx, (data_list, title, color) in enumerate(data_sets):
             ax = axes[idx]
             ax.set_title(title)
@@ -199,25 +207,91 @@ def check_output(import_out_path, prefix=None, figsize=(12, 4)):
 
             # 最初の点と最後の点に数値をプロット
             if len(data_list) > 0:
+                # Y軸の表示範囲を取得してYオフセット量を動的に計算
+                y_min, y_max = ax.get_ylim()
+                current_y_offset = (y_max - y_min) * text_offset_y_factor
+                
+                # X軸の表示範囲を取得してXオフセット量を動的に計算
+                x_min, x_max = ax.get_xlim()
+                current_x_offset = (x_max - x_min) * text_offset_x_factor
+                
                 # 最初の点
                 first_idx, first_val = 0, data_list[0]
-                ax.text(first_idx, first_val, f'{first_val:.2f}',
-                        ha='left', va='bottom', fontsize=8, color='blue')
-                ax.scatter(first_idx, first_val, color='black', s=20, zorder=5) # sでマーカーサイズ調整
+                
+                # Y値に基づいてテキストを上または下にオフセット
+                if first_val + current_y_offset > y_max and first_val - current_y_offset > y_min:
+                    # 上にオフセットすると突き抜けるが、下にオフセットできる場合
+                    text_first_y_offset = -current_y_offset
+                    first_va = 'top'
+                elif first_val - current_y_offset < y_min and first_val + current_y_offset < y_max:
+                    # 下にオフセットすると突き抜けるが、上にオフセットできる場合
+                    text_first_y_offset = current_y_offset
+                    first_va = 'bottom'
+                elif first_val + current_y_offset > y_max: # どちらも突き抜けるが、Y軸の上限に近い場合
+                    text_first_y_offset = -current_y_offset
+                    first_va = 'top'
+                else: # 通常は上にオフセット
+                    text_first_y_offset = current_y_offset
+                    first_va = 'bottom'
+
+                # X軸方向のオフセットは右に
+                ax.text(first_idx + current_x_offset, first_val + text_first_y_offset,
+                        f'{first_val:.2f}',
+                        ha='left', va=first_va, fontsize=8, color='black')
+                        # bbox=dict(boxstyle='round,pad=0.2', fc='yellow', ec='none', alpha=0.7))
+                ax.scatter(first_idx, first_val, color='blue', s=20, zorder=5)
 
                 # 最後の点
                 last_idx, last_val = len(data_list) - 1, data_list[-1]
-                ax.text(last_idx, last_val, f'{last_val:.2f}',
-                        ha='right', va='top', fontsize=8, color='blue')
-                ax.scatter(last_idx, last_val, color='black', s=20, zorder=5)
+                
+                # Y値に基づいてテキストを上または下にオフセット
+                if last_val + current_y_offset > y_max and last_val - current_y_offset > y_min:
+                    text_last_y_offset = -current_y_offset
+                    last_va = 'top'
+                elif last_val - current_y_offset < y_min and last_val + current_y_offset < y_max:
+                    text_last_y_offset = current_y_offset
+                    last_va = 'bottom'
+                elif last_val + current_y_offset > y_max:
+                    text_last_y_offset = -current_y_offset
+                    last_va = 'top'
+                else:
+                    text_last_y_offset = current_y_offset
+                    last_va = 'bottom'
+
+                # X軸方向のオフセットは左に
+                ax.text(last_idx - current_x_offset, last_val + text_last_y_offset,
+                        f'{last_val:.2f}',
+                        ha='right', va=last_va, fontsize=8, color='black')
+                        # bbox=dict(boxstyle='round,pad=0.2', fc='yellow', ec='none', alpha=0.7))
+                ax.scatter(last_idx, last_val, color='blue', s=20, zorder=5)
 
                 # データの差をグラフ内に表示
                 data_range = last_val - first_val
-                # Axes座標系を使用し、右下に配置
-                ax.text(0.98, 0.02,
+
+                # Y軸のデータ範囲に基づいてテキスト位置を決定
+                y_min, y_max = ax.get_ylim()
+                y_span = y_max - y_min
+
+                # 最後のデータポイントがサブプロットのY軸のどこにあるか確認
+                # 例えば、下1/3にいるならテキストを上に、上1/3にいるならテキストを下に配置
+                relative_last_y = (last_val - y_min) / y_span
+
+                if relative_last_y < 0.33: # グラフの下1/3に最後のデータがある場合
+                    # テキストを上に配置 (va='top')
+                    text_va = 'bottom'
+                    text_y_pos = 0.98 # Axes座標のY軸の上端近く
+                elif relative_last_y > 0.66: # グラフの上1/3に最後のデータがある場合
+                    # テキストを下に配置 (va='bottom')
+                    text_va = 'top'
+                    text_y_pos = 0.02 # Axes座標のY軸の下端近く
+                else: # 中間の場合 (デフォルトの右下)
+                    text_va = 'bottom'
+                    text_y_pos = 0.02
+
+                ax.text(0.98, text_y_pos, # Xは右端に固定、Yは動的に決定
                         f'Diff: {data_range:.2f}',
-                        transform=ax.transAxes, # Axes座標系を使用
-                        ha='right', va='bottom', fontsize=9,
+                        transform=ax.transAxes,
+                        ha='right', va=text_va, fontsize=9,
                         bbox=dict(boxstyle='round,pad=0.3', fc='wheat', ec='k', lw=0.5, alpha=0.7))
 
             ax.legend()
