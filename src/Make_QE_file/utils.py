@@ -144,42 +144,87 @@ def check_JOB_DONE(calc, QE_out_path):
         return False
 
 
-def check_output(import_out_path):
-    with open(import_out_path, "r") as f:
-        out_data = f.readlines()
-        list_total_energy = []
-        list_Total_force = []
-        list_P = []
-        for i in range(len(out_data)):
-            line_split = out_data[i].split()
-            if "!" in out_data[i] and "total energy" in out_data[i]:
-                for j in range(len(line_split)):
-                    try:
-                        list_total_energy.append(float(line_split[j]))
-                        break
-                    except:
-                        None
-            if "Total force =" in out_data[i]:
-                for j in range(len(line_split)):
-                    try:
-                        list_Total_force.append(float(line_split[j]))
-                        break
-                    except:
-                        None
-            if "(kbar)" in out_data[i] and "P" in out_data[i]:
-                for j in range(len(line_split)):
-                    if "P" in line_split[j]:
-                        list_P.append(float(line_split[j + 1]))
-    fig, axes = plt.subplots(1, 3, figsize=(12, 4))
-    plt.plot(range(len(list_P)), list_P)
-    axes[0].set_title("total_energy")
-    axes[0].plot(range(len(list_total_energy)), list_total_energy, label="total_energy", color="r")
-    axes[1].set_title("Total_force")
-    axes[1].plot(range(len(list_Total_force)), list_Total_force, label="Total_force", color="g")
-    axes[2].set_title("P")
-    axes[2].plot(range(len(list_P)), list_P, label="P", color="b")
-    for ax in axes:
-        ax.legend()
-        ax.grid(True)  # グリッドを表示
-    plt.tight_layout()
-    plt.show()
+def check_output(import_out_path, prefix=None, figsize=(12, 4)):
+    if os.path.exists(import_out_path):
+        with open(import_out_path, "r") as f:
+            out_data = f.readlines()
+            list_total_energy = []
+            list_Total_force = []
+            list_P = []
+            for i in range(len(out_data)):
+                line_split = out_data[i].split()
+                if "!" in out_data[i] and "total energy" in out_data[i]:
+                    for j in range(len(line_split)):
+                        try:
+                            list_total_energy.append(float(line_split[j]))
+                            break
+                        except ValueError: # floatへの変換エラーを具体的に捕獲
+                            pass
+                if "Total force =" in out_data[i]:
+                    for j in range(len(line_split)):
+                        try:
+                            list_Total_force.append(float(line_split[j]))
+                            break
+                        except ValueError: # floatへの変換エラーを具体的に捕獲
+                            pass
+                if "(kbar)" in out_data[i] and "P" in out_data[i]:
+                    for j in range(len(line_split)):
+                        if "P" in line_split[j]:
+                            try:
+                                list_P.append(float(line_split[j + 1]))
+                                break # 値が見つかったらループを抜ける
+                            except (ValueError, IndexError): # 複数エラーを捕獲
+                                pass
+        fig, axes = plt.subplots(1, 3, figsize=figsize)
+        if not prefix is None:
+            fig.suptitle(prefix, fontsize=16)
+        data_sets = [
+            (list_total_energy, "Total Energy", "r"),
+            (list_Total_force, "Total Force", "g"),
+            (list_P, "Pressure (kbar)", "b")
+        ]
+        for idx, (data_list, title, color) in enumerate(data_sets):
+            ax = axes[idx]
+            ax.set_title(title)
+
+            # データがない場合はプロットせずにメッセージを表示
+            if not data_list:
+                ax.text(0.5, 0.5, "No data found", transform=ax.transAxes,
+                        ha='center', va='center', fontsize=12, color='gray')
+                ax.set_xticks([])
+                ax.set_yticks([])
+                continue
+
+            ax.plot(range(len(data_list)), data_list, label=title, color=color)
+
+            # 最初の点と最後の点に数値をプロット
+            if len(data_list) > 0:
+                # 最初の点
+                first_idx, first_val = 0, data_list[0]
+                ax.text(first_idx, first_val, f'{first_val:.2f}',
+                        ha='right', va='bottom', fontsize=8, color='blue')
+                ax.scatter(first_idx, first_val, color='bk', s=20, zorder=5) # sでマーカーサイズ調整
+
+                # 最後の点
+                last_idx, last_val = len(data_list) - 1, data_list[-1]
+                ax.text(last_idx, last_val, f'{last_val:.2f}',
+                        ha='left', va='top', fontsize=8, color='blue')
+                ax.scatter(last_idx, last_val, color='bk', s=20, zorder=5)
+
+                # データの差をグラフ内に表示
+                data_range = last_val - first_val
+                # Axes座標系を使用し、右下に配置
+                ax.text(0.98, 0.02,
+                        f'Diff: {data_range:.2f}',
+                        transform=ax.transAxes, # Axes座標系を使用
+                        ha='right', va='bottom', fontsize=9,
+                        bbox=dict(boxstyle='round,pad=0.3', fc='wheat', ec='k', lw=0.5, alpha=0.7))
+
+            ax.legend()
+            ax.grid(True)
+            ax.set_xlabel("Step") # 共通のX軸ラベル
+
+        plt.tight_layout(rect=[0, 0, 1, 0.96]) # 全体タイトルと重ならないように調整
+        plt.show()
+    else:
+        print(f"File not found: {import_out_path}")
