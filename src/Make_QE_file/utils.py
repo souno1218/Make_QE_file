@@ -202,14 +202,14 @@ def check_output(import_out_path, prefix=None, figsize=(12, 4)):
                 # 最初の点
                 first_idx, first_val = 0, data_list[0]
                 ax.text(first_idx, first_val, f'{first_val:.2f}',
-                        ha='right', va='bottom', fontsize=8, color='blue')
-                ax.scatter(first_idx, first_val, color='bk', s=20, zorder=5) # sでマーカーサイズ調整
+                        ha='left', va='bottom', fontsize=8, color='blue')
+                ax.scatter(first_idx, first_val, color='black', s=20, zorder=5) # sでマーカーサイズ調整
 
                 # 最後の点
                 last_idx, last_val = len(data_list) - 1, data_list[-1]
                 ax.text(last_idx, last_val, f'{last_val:.2f}',
-                        ha='left', va='top', fontsize=8, color='blue')
-                ax.scatter(last_idx, last_val, color='bk', s=20, zorder=5)
+                        ha='right', va='top', fontsize=8, color='blue')
+                ax.scatter(last_idx, last_val, color='black', s=20, zorder=5)
 
                 # データの差をグラフ内に表示
                 data_range = last_val - first_val
