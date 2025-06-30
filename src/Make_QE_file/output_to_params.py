@@ -213,11 +213,14 @@ def vc_relax_output_to_params(import_out_path, base_params):
             case 0:
                 # Cartesian_axes(0) @ a2c
                 before_arr = (Cartesian_axes[["x", "y", "z"]].values @ alat_to_crystal).copy()
+                print(before_arr)
                 # ATOMIC_POSITIONS @ crystal axes(0) @ a2c
                 after_arr = (ATOMIC_POSITIONS[["x", "y", "z"]].values @ crystal_axes @ alat_to_crystal).copy()
             case 1:
                 before_arr = (Cartesian_axes[["x", "y", "z"]].values @ reciprocal_axes.T).copy()
                 after_arr = ATOMIC_POSITIONS[["x", "y", "z"]].values.copy()
+        print(before_arr)
+        print(after_arr)
         found_all = True
         df_ATOMIC_POSITIONS = return_params["df_ATOMIC_POSITIONS"].copy()
         for i in range(df_ATOMIC_POSITIONS.shape[0]):
