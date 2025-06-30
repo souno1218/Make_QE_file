@@ -11,49 +11,49 @@ def cif_to_params(import_cif_path):
         cif_data = f.readlines()
         for i in range(len(cif_data)):
             one_line = cif_data[i].split("#")[0]
-            if "_cell_length_a" in cif_data[i]:
+            if "_cell_length_a" in one_line:
                 for j in one_line.split():
                     try:
                         params_cif["a"] = round_half(j)
                     except:
                         None
-            if "_cell_length_b" in cif_data[i]:
+            if "_cell_length_b" in one_line:
                 for j in one_line.split():
                     try:
                         params_cif["b"] = round_half(j)
                     except:
                         None
-            if "_cell_length_c" in cif_data[i]:
+            if "_cell_length_c" in one_line:
                 for j in one_line.split():
                     try:
                         params_cif["c"] = round_half(j)
                     except:
                         None
-            if "_cell_angle_alpha" in cif_data[i]:
+            if "_cell_angle_alpha" in one_line:
                 for j in one_line.split():
                     try:
                         params_cif["alpha"] = round_half(j)
                     except:
                         None
-            if "_cell_angle_beta" in cif_data[i]:
+            if "_cell_angle_beta" in one_line:
                 for j in one_line.split():
                     try:
                         params_cif["beta"] = round_half(j)
                     except:
                         None
-            if "_cell_angle_gamma" in cif_data[i]:
+            if "_cell_angle_gamma" in one_line:
                 for j in one_line.split():
                     try:
                         params_cif["gamma"] = round_half(j)
                     except:
                         None
-            if "_space_group_IT_number" in cif_data[i]:
+            if "_space_group_IT_number" in one_line:
                 for j in one_line.split():
                     try:
                         params_cif["space_group_number"] = int(j)
                     except:
                         None
-            if "_symmetry_Int_Tables_number" in cif_data[i]:
+            if "_symmetry_Int_Tables_number" in one_line:
                 for j in one_line.split():
                     try:
                         params_cif["space_group_number"] = int(j)
