@@ -15,19 +15,50 @@ def output_to_params(calc, import_out_path, base_params):
     else:
         raise Exception("not support this calc : {calc}")
 
+# relax
+# Cartesian_axes     ： （拡張だけした）座標変換前の初期位置, alat units
+# ATOMIC_POSITIONS   : 座標変換後の（複数ある最後が)最終位置, crystal
+# crystal axes(0)    : , (v)alat units
+# reciprocal axes(0) : , 2 pi/alat
+
+# vc-relax
+# Cartesian_axes(0)  : （拡張だけした）座標変換前の初期位置, （初期）alat units
+# Cartesian_axes(1)  : （拡張だけした）座標変換前の最終位置, （初期）alat units
+# ATOMIC_POSITIONS   : 座標変換後の（複数ある最後が)最終位置, crystal
+# crystal axes(0)    : , （初期）alat units
+# crystal axes(1)    : , （初期）alat units
+# reciprocal axes(0) : , 2 pi/ （c）alat
+# reciprocal axes(1) : , 2 pi/ （初期）alat
+# CELL_PARAMETERS    : ちょっと正確なcrystal axes（1）, （初期）alat units
+
+# alay_to_crystal = [[1, 0,   0  ], # (= a2c)
+#                    [0, b/a, 0  ],
+#                    [0, 0,   c/a]]
+
+# -> 計算前, 座標変換前, 拡張後のcrystal
+# Cartesian_axes(0) @ a2c
+# -> 計算後, 座標変換前, 拡張後のcrystal
+# ATOMIC_POSITIONS @ crystal axes(0) @ a2c
+# -> 計算前後で各軸ののび
+# diag(CELL_PARAMETERS.T @ reciprocal axes(0))
 
 def relax_output_to_params(import_out_path, base_params):
     int_nan = -100
     return_params = base_params.copy()
     with open(import_out_path, "r") as f:
         out_data = f.readlines()
+        ibrav = None
         crystal_axes = None
         Cartesian_axes = None
         for i in range(len(out_data)):
+            if "bravais-lattice index" in out_data[i]:
+                if ibrav is None:
+                    ibrav = int(out_data[i].split()[3])
             if "crystal axes: " in out_data[i]:
-                crystal_axes = np.array(
-                    [out_data[i + 1].split()[3:6], out_data[i + 2].split()[3:6], out_data[i + 3].split()[3:6]]
-                ).astype("float64")
+                if crystal_axes is None:
+                    crystal_axes = np.array(
+                        [out_data[i + 1].split()[3:6], out_data[i + 2].split()[3:6], out_data[i + 3].split()[3:6]]
+                    ).astype("float64")
             if "Cartesian axes" in out_data[i]:
                 if Cartesian_axes is None:
                     Cartesian_axes = pd.DataFrame(columns=["atom", "x", "y", "z"])
@@ -36,9 +67,9 @@ def relax_output_to_params(import_out_path, base_params):
                         one_line_split = out_data[i + j].split()
                         Cartesian_axes.loc[int(one_line_split[0])] = [
                             one_line_split[1],
-                            one_line_split[6],
-                            one_line_split[7],
-                            one_line_split[8],
+                            float(one_line_split[6]),
+                            float(one_line_split[7]),
+                            float(one_line_split[8]),
                         ]
                         j += 1
             if "End final coordinates" in out_data[i]:
@@ -51,22 +82,19 @@ def relax_output_to_params(import_out_path, base_params):
                             one_line_split = out_data[j + k].split()
                             ATOMIC_POSITIONS.loc[k] = [
                                 one_line_split[0],
-                                one_line_split[1],
-                                one_line_split[2],
-                                one_line_split[3],
+                                float(one_line_split[1]),
+                                float(one_line_split[2]),
+                                float(one_line_split[3]),
                             ]
                         break
-    xyz_conv = np.dot(ATOMIC_POSITIONS[["x", "y", "z"]].values.astype("float"), crystal_axes)
-    ATOMIC_POSITIONS[["x", "y", "z"]] = round_half(xyz_conv)
-    Cartesian_axes["y"] = round_half(Cartesian_axes["y"].values.astype("float") / base_params["b"] * base_params["a"])
-    Cartesian_axes["z"] = round_half(Cartesian_axes["z"].values.astype("float") / base_params["c"] * base_params["a"])
-    ATOMIC_POSITIONS["x"] = round_half(ATOMIC_POSITIONS["x"].values.astype("float"))
-    ATOMIC_POSITIONS["y"] = round_half(
-        ATOMIC_POSITIONS["y"].values.astype("float") * (base_params["a"] / (base_params["b"]))
-    )
-    ATOMIC_POSITIONS["z"] = round_half(
-        ATOMIC_POSITIONS["z"].values.astype("float") * (base_params["a"] / (base_params["c"]))
-    )
+    alat_to_crystal = np.array([[1, 0, 0],
+                                [0, base_params["a"]/ base_params["b"], 0],
+                                [0, 0, base_params["a"]/ base_params["c"]]])
+
+    # Cartesian_axes(0) @ a2c
+    Cartesian_axes[["x", "y", "z"]] @= alat_to_crystal
+    # ATOMIC_POSITIONS @ crystal axes(0) @ a2c
+    ATOMIC_POSITIONS[["x", "y", "z"]] @= (crystal_axes @ alat_to_crystal)
     df_ATOMIC_POSITIONS = return_params["df_ATOMIC_POSITIONS"].copy()
     for i in range(df_ATOMIC_POSITIONS.shape[0]):
         for j in range(Cartesian_axes.shape[0]):
@@ -74,8 +102,8 @@ def relax_output_to_params(import_out_path, base_params):
             target_symbol = df_ATOMIC_POSITIONS["symbol"].iloc[i]
             target_xyz = df_ATOMIC_POSITIONS[["str_x", "str_y", "str_z"]].iloc[i].values.astype("float")
             if target_symbol == Cartesian_axes["atom"].iloc[j]:
-                before_xyz = Cartesian_axes[["x", "y", "z"]].iloc[j].values.astype("float")
-                after_xyz = ATOMIC_POSITIONS[["x", "y", "z"]].iloc[j].values.astype("float")
+                before_xyz = Cartesian_axes[["x", "y", "z"]].iloc[j].values
+                after_xyz = ATOMIC_POSITIONS[["x", "y", "z"]].iloc[j].values
                 if np.linalg.norm(target_xyz - before_xyz, ord=2) <= 1e-4:
                     df_ATOMIC_POSITIONS.loc[target_label, "str_x"] = "{:.05f}".format(round_half(after_xyz[0]))
                     df_ATOMIC_POSITIONS.loc[target_label, "str_y"] = "{:.05f}".format(round_half(after_xyz[1]))
@@ -105,18 +133,19 @@ def vc_relax_output_to_params(import_out_path, base_params):
         Cartesian_axes = None
         CELL_PARAMETERS = None
         length_A = int_nan
+        celldm = {1:[], 2:[], 3:[], 4:[], 5:[], 6:[]}
         for i in range(len(out_data)):
             if "celldm(1)" in out_data[i]:
-                line_celldm1 = out_data[i].split()
-                for i in range(len(line_celldm1)):
-                    if "celldm(1)" in line_celldm1[i]:
-                        try:
-                            if length_A == int_nan:
-                                length_A = float(line_celldm1[i + 1])
-                            elif not np.isclose(length_A, float(line_celldm1[i + 1])):
-                                raise
-                        except:
-                            raise
+                celldm[1].append(float(out_data[i].split()[1]))
+                celldm[2].append(float(out_data[i].split()[3]))
+                celldm[3].append(float(out_data[i].split()[5]))
+            if "celldm(4)" in out_data[i]:
+                celldm[4].append(float(out_data[i].split()[1]))
+                celldm[5].append(float(out_data[i].split()[3]))
+                celldm[6].append(float(out_data[i].split()[5]))
+            if "bravais-lattice index" in out_data[i]:
+                if ibrav is None:
+                    ibrav = int(out_data[i].split()[3])
             if "crystal axes: " in out_data[i]:
                 if crystal_axes is None:
                     crystal_axes = np.array(
@@ -135,9 +164,9 @@ def vc_relax_output_to_params(import_out_path, base_params):
                         one_line_split = out_data[i + j].split()
                         Cartesian_axes.loc[int(one_line_split[0])] = [
                             one_line_split[1],
-                            one_line_split[6],
-                            one_line_split[7],
-                            one_line_split[8],
+                            float(one_line_split[6]),
+                            float(one_line_split[7]),
+                            float(one_line_split[8]),
                         ]
                         j += 1
             if "End final coordinates" in out_data[i]:
@@ -151,9 +180,9 @@ def vc_relax_output_to_params(import_out_path, base_params):
                             one_line_split = out_data[j + k].split()
                             ATOMIC_POSITIONS.loc[k] = [
                                 one_line_split[0],
-                                one_line_split[1],
-                                one_line_split[2],
-                                one_line_split[3],
+                                float(one_line_split[1]),
+                                float(one_line_split[2]),
+                                float(one_line_split[3]),
                             ]
                         break
                 for j in range(last_ATOMIC_POSITIONS_index - 1, -1, -1):
@@ -167,35 +196,46 @@ def vc_relax_output_to_params(import_out_path, base_params):
                         CELL_PARAMETERS = np.array(
                             [out_data[j + 1].split(), out_data[j + 2].split(), out_data[j + 3].split()]
                         ).astype("float64")
-
-    conventional_before2after = np.dot(CELL_PARAMETERS.T, reciprocal_axes)
-    after_a = np.dot(conventional_before2after, [1, 0, 0])
-    after_b = np.dot(conventional_before2after, [0, 1, 0])
-    after_c = np.dot(conventional_before2after, [0, 0, 1])
-    norm_after_a = np.linalg.norm(after_a, ord=2)
-    norm_after_b = np.linalg.norm(after_b, ord=2)
-    norm_after_c = np.linalg.norm(after_c, ord=2)
-    return_params["a"] = round_half(base_params["a"] * norm_after_a)
-    return_params["b"] = round_half(base_params["b"] * norm_after_b)
-    return_params["c"] = round_half(base_params["c"] * norm_after_c)
-    return_params["alpha"] = round_half(
-        180 * np.arccos(np.inner(after_b, after_c) / (norm_after_b * norm_after_c)) / np.pi
-    )
-    return_params["beta"] = round_half(
-        180 * np.arccos(np.inner(after_a, after_c) / (norm_after_a * norm_after_c)) / np.pi
-    )
-    return_params["gamma"] = round_half(
-        180 * np.arccos(np.inner(after_a, after_b) / (norm_after_a * norm_after_b)) / np.pi
-    )
-    Cartesian_axes["y"] = round_half(Cartesian_axes["y"].values.astype("float") / base_params["b"] * base_params["a"])
-    Cartesian_axes["z"] = round_half(Cartesian_axes["z"].values.astype("float") / base_params["c"] * base_params["a"])
-    ATOMIC_POSITIONS["x"] = round_half(ATOMIC_POSITIONS["x"].values.astype("float") / norm_after_a)
-    ATOMIC_POSITIONS["y"] = round_half(
-        ATOMIC_POSITIONS["y"].values.astype("float") * (base_params["a"] / (base_params["b"] * norm_after_b))
-    )
-    ATOMIC_POSITIONS["z"] = round_half(
-        ATOMIC_POSITIONS["z"].values.astype("float") * (base_params["a"] / (base_params["c"] * norm_after_c))
-    )
+                        break
+    alat_to_crystal = np.array([[1, 0, 0],
+                                [0, base_params["a"]/ base_params["b"], 0],
+                                [0, 0, base_params["a"]/ base_params["c"]]])
+    # Cartesian_axes(0) @ a2c
+    Cartesian_axes[["x", "y", "z"]] @= alat_to_crystal
+    # ATOMIC_POSITIONS @ crystal axes(0) @ a2c
+    ATOMIC_POSITIONS[["x", "y", "z"]] @= (crystal_axes @ alat_to_crystal)
+    df_ATOMIC_POSITIONS = return_params["df_ATOMIC_POSITIONS"].copy()
+    # diag(CELL_PARAMETERS.T @ reciprocal axes(0))
+    ratio_abc = np.linalg.norm(CELL_PARAMETERS.T @ reciprocal_axes, axis=0, ord=2)
+    return_params["a"] = round_half(base_params["a"] * ratio_abc[0])
+    return_params["b"] = round_half(base_params["b"] * ratio_abc[1])
+    return_params["c"] = round_half(base_params["c"] * ratio_abc[2])
+    match ibrav:
+        case 5 | -5:
+            theta = round_half(np.degrees(np.arccos(celldm[4][1])))
+            return_params["alpha"] = theta
+            return_params["beta"] = theta
+            return_params["gamma"] = theta
+        case 12:
+            return_params["alpha"] = base_params["alpha"]
+            return_params["beta"] = base_params["beta"]
+            return_params["gamma"] = round_half(np.degrees(np.arccos(celldm[4][1])))
+        case -12:
+            return_params["alpha"] = base_params["alpha"]
+            return_params["beta"] = round_half(np.degrees(np.arccos(celldm[5][1])))
+            return_params["gamma"] = base_params["gamma"]
+        case 13:
+            return_params["alpha"] = base_params["alpha"]
+            return_params["beta"] = base_params["beta"]
+            return_params["gamma"] = round_half(np.degrees(np.arccos(celldm[4][1])))
+        case -13:
+            return_params["alpha"] = base_params["alpha"]
+            return_params["beta"] = round_half(np.degrees(np.arccos(celldm[5][1])))
+            return_params["gamma"] = base_params["gamma"]
+        case 14:
+            return_params["alpha"] = round_half(np.degrees(np.arccos(celldm[4][1])))
+            return_params["beta"] = round_half(np.degrees(np.arccos(celldm[5][1])))
+            return_params["gamma"] = round_half(np.degrees(np.arccos(celldm[6][1])))
     df_ATOMIC_POSITIONS = return_params["df_ATOMIC_POSITIONS"]
     for i in range(df_ATOMIC_POSITIONS.shape[0]):
         for j in range(Cartesian_axes.shape[0]):
@@ -203,8 +243,8 @@ def vc_relax_output_to_params(import_out_path, base_params):
             target_symbol = df_ATOMIC_POSITIONS["symbol"].iloc[i]
             target_xyz = df_ATOMIC_POSITIONS[["str_x", "str_y", "str_z"]].iloc[i].values.astype("float")
             if target_symbol == Cartesian_axes["atom"].iloc[j]:
-                before_xyz = Cartesian_axes[["x", "y", "z"]].iloc[j].values.astype("float")
-                after_xyz = Cartesian_axes[["x", "y", "z"]].iloc[j].values.astype("float")
+                before_xyz = Cartesian_axes[["x", "y", "z"]].iloc[j].values
+                after_xyz = ATOMIC_POSITIONS[["x", "y", "z"]].iloc[j].values
                 if np.linalg.norm(target_xyz - before_xyz, ord=2) <= 1e-4:
                     df_ATOMIC_POSITIONS.loc[target_label, "str_x"] = "{:.05f}".format(round_half(after_xyz[0]))
                     df_ATOMIC_POSITIONS.loc[target_label, "str_y"] = "{:.05f}".format(round_half(after_xyz[1]))
