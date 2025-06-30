@@ -133,6 +133,7 @@ def vc_relax_output_to_params(import_out_path, base_params):
         Cartesian_axes = None
         CELL_PARAMETERS = None
         length_A = int_nan
+        ibrav = None
         # celldm = {1:[], 2:[], 3:[], 4:[], 5:[], 6:[]}
         for i in range(len(out_data)):
             #if "celldm(1)" in out_data[i]:
