@@ -132,7 +132,6 @@ def vc_relax_output_to_params(import_out_path, base_params):
         reciprocal_axes = None
         Cartesian_axes = None
         CELL_PARAMETERS = None
-        length_A = int_nan
         ibrav = None
         # celldm = {1:[], 2:[], 3:[], 4:[], 5:[], 6:[]}
         for i in range(len(out_data)):
@@ -188,12 +187,6 @@ def vc_relax_output_to_params(import_out_path, base_params):
                         break
                 for j in range(last_ATOMIC_POSITIONS_index - 1, -1, -1):
                     if "CELL_PARAMETERS" in out_data[j]:
-                        split_ = out_data[j].split()
-                        for k in range(len(split_)):
-                            if "alat" in split_[k]:
-                                new_A = float(re.search(r"-?\d+\.\d+", split_[k + 1]).group())
-                                if not np.isclose(length_A, new_A):
-                                    raise
                         CELL_PARAMETERS = np.array(
                             [out_data[j + 1].split(), out_data[j + 2].split(), out_data[j + 3].split()]
                         ).astype("float64")
