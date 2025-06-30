@@ -64,7 +64,7 @@ def cif_to_params(import_cif_path):
         list_loop_index.append(len(cif_data))
         for i in range(len(list_loop_index) - 1):
             for j in range(list_loop_index[i], list_loop_index[i + 1]):
-                if "_atom_site" in cif_data[i].split("#")[0]:
+                if "_atom_site" in cif_data[j].split("#")[0]:
                     loop_index = list_loop_index[i]
         loop_label_2_index = {}
         len_labels = 0
