@@ -312,3 +312,9 @@ def check_output(import_out_path, prefix=None, figsize=(12, 4), save_path=None):
                 print(f"Error saving plot to {save_path}: {e}")
 
     plt.show() # 保存する場合もしない場合も、画面には表示する
+
+
+def make_angle(vec0, vec1):
+    norm_vec0 = np.linalg.norm(vec0, ord=2)
+    norm_vec1 = np.linalg.norm(vec1, ord=2)
+    return np.degrees(np.arccos((vec0 @ vec1) / (norm_vec0 * norm_vec1)))

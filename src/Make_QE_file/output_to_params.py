@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import re
-from .utils import check_args, round_half
+from .utils import check_args, round_half, make_angle
 
 # https://qiita.com/xa_member/items/a519c53b63df75a68894
 
@@ -133,16 +133,16 @@ def vc_relax_output_to_params(import_out_path, base_params):
         Cartesian_axes = None
         CELL_PARAMETERS = None
         length_A = int_nan
-        celldm = {1:[], 2:[], 3:[], 4:[], 5:[], 6:[]}
+        # celldm = {1:[], 2:[], 3:[], 4:[], 5:[], 6:[]}
         for i in range(len(out_data)):
-            if "celldm(1)" in out_data[i]:
-                celldm[1].append(float(out_data[i].split()[1]))
-                celldm[2].append(float(out_data[i].split()[3]))
-                celldm[3].append(float(out_data[i].split()[5]))
-            if "celldm(4)" in out_data[i]:
-                celldm[4].append(float(out_data[i].split()[1]))
-                celldm[5].append(float(out_data[i].split()[3]))
-                celldm[6].append(float(out_data[i].split()[5]))
+            #if "celldm(1)" in out_data[i]:
+            #    celldm[1].append(float(out_data[i].split()[1]))
+            #    celldm[2].append(float(out_data[i].split()[3]))
+            #    celldm[3].append(float(out_data[i].split()[5]))
+            #if "celldm(4)" in out_data[i]:
+            #    celldm[4].append(float(out_data[i].split()[1]))
+            #    celldm[5].append(float(out_data[i].split()[3]))
+            #    celldm[6].append(float(out_data[i].split()[5]))
             if "bravais-lattice index" in out_data[i]:
                 if ibrav is None:
                     ibrav = int(out_data[i].split()[3])
@@ -200,65 +200,61 @@ def vc_relax_output_to_params(import_out_path, base_params):
     alat_to_crystal = np.array([[1, 0, 0],
                                 [0, base_params["a"]/ base_params["b"], 0],
                                 [0, 0, base_params["a"]/ base_params["c"]]])
-    # Cartesian_axes(0) @ a2c
-    Cartesian_axes[["x", "y", "z"]] @= alat_to_crystal
-    # ATOMIC_POSITIONS @ crystal axes(0) @ a2c
-    ATOMIC_POSITIONS[["x", "y", "z"]] @= (crystal_axes @ alat_to_crystal)
-    df_ATOMIC_POSITIONS = return_params["df_ATOMIC_POSITIONS"].copy()
-    # diag(CELL_PARAMETERS.T @ reciprocal axes(0))
+    # CELL_PARAMETERS.T @ reciprocal axes(0)
     ratio_abc = np.linalg.norm(CELL_PARAMETERS.T @ reciprocal_axes, axis=0, ord=2)
     return_params["a"] = round_half(base_params["a"] * ratio_abc[0])
     return_params["b"] = round_half(base_params["b"] * ratio_abc[1])
     return_params["c"] = round_half(base_params["c"] * ratio_abc[2])
     match ibrav:
-        case 5 | -5:
-            theta = round_half(np.degrees(np.arccos(celldm[4][1])))
-            return_params["alpha"] = theta
-            return_params["beta"] = theta
-            return_params["gamma"] = theta
-        case 12:
+        case 5 | -5 | 12 | -12 | 12 | 13 | -13 | 14:
+            return_params["alpha"] = make_angle(CELL_PARAMETERS[1] @ alat_to_crystal, CELL_PARAMETERS[2] @ alat_to_crystal)
+            return_params["beta"] = make_angle(CELL_PARAMETERS[2] @ alat_to_crystal, CELL_PARAMETERS[0] @ alat_to_crystal)
+            return_params["gamma"] = make_angle(CELL_PARAMETERS[0] @ alat_to_crystal, CELL_PARAMETERS[1] @ alat_to_crystal)
+        case _:
             return_params["alpha"] = base_params["alpha"]
             return_params["beta"] = base_params["beta"]
-            return_params["gamma"] = round_half(np.degrees(np.arccos(celldm[4][1])))
-        case -12:
-            return_params["alpha"] = base_params["alpha"]
-            return_params["beta"] = round_half(np.degrees(np.arccos(celldm[5][1])))
             return_params["gamma"] = base_params["gamma"]
-        case 13:
-            return_params["alpha"] = base_params["alpha"]
-            return_params["beta"] = base_params["beta"]
-            return_params["gamma"] = round_half(np.degrees(np.arccos(celldm[4][1])))
-        case -13:
-            return_params["alpha"] = base_params["alpha"]
-            return_params["beta"] = round_half(np.degrees(np.arccos(celldm[5][1])))
-            return_params["gamma"] = base_params["gamma"]
-        case 14:
-            return_params["alpha"] = round_half(np.degrees(np.arccos(celldm[4][1])))
-            return_params["beta"] = round_half(np.degrees(np.arccos(celldm[5][1])))
-            return_params["gamma"] = round_half(np.degrees(np.arccos(celldm[6][1])))
-    df_ATOMIC_POSITIONS = return_params["df_ATOMIC_POSITIONS"]
-    for i in range(df_ATOMIC_POSITIONS.shape[0]):
-        for j in range(Cartesian_axes.shape[0]):
-            target_label = df_ATOMIC_POSITIONS["label"].iloc[i]
-            target_symbol = df_ATOMIC_POSITIONS["symbol"].iloc[i]
-            target_xyz = df_ATOMIC_POSITIONS[["str_x", "str_y", "str_z"]].iloc[i].values.astype("float")
-            if target_symbol == Cartesian_axes["atom"].iloc[j]:
-                before_xyz = Cartesian_axes[["x", "y", "z"]].iloc[j].values
-                after_xyz = ATOMIC_POSITIONS[["x", "y", "z"]].iloc[j].values
-                if np.linalg.norm(target_xyz - before_xyz, ord=2) <= 1e-4:
-                    df_ATOMIC_POSITIONS.loc[target_label, "str_x"] = "{:.05f}".format(round_half(after_xyz[0]))
-                    df_ATOMIC_POSITIONS.loc[target_label, "str_y"] = "{:.05f}".format(round_half(after_xyz[1]))
-                    df_ATOMIC_POSITIONS.loc[target_label, "str_z"] = "{:.05f}".format(round_half(after_xyz[2]))
-                    break
-                before_xyz = (before_xyz + 0.5) % 1
-                after_xyz = (after_xyz + 0.5) % 1
-                if np.linalg.norm(target_xyz - before_xyz, ord=2) <= 1e-4:
-                    df_ATOMIC_POSITIONS.loc[target_label, "str_x"] = "{:.05f}".format(round_half(after_xyz[0]))
-                    df_ATOMIC_POSITIONS.loc[target_label, "str_y"] = "{:.05f}".format(round_half(after_xyz[1]))
-                    df_ATOMIC_POSITIONS.loc[target_label, "str_z"] = "{:.05f}".format(round_half(after_xyz[2]))
-                    break
-        else:
-            raise
+    for k in range(2):
+        match k:
+            case 0:
+                # Cartesian_axes(0) @ a2c
+                before_arr = (Cartesian_axes[["x", "y", "z"]].values @ alat_to_crystal).copy()
+                # ATOMIC_POSITIONS @ crystal axes(0) @ a2c
+                after_arr = (ATOMIC_POSITIONS[["x", "y", "z"]].values @ crystal_axes @ alat_to_crystal).copy()
+            case 1:
+                before_arr = (Cartesian_axes[["x", "y", "z"]].values @ reciprocal_axes.T).copy()
+                after_arr = ATOMIC_POSITIONS[["x", "y", "z"]].values.copy()
+        found_all = True
+        df_ATOMIC_POSITIONS = return_params["df_ATOMIC_POSITIONS"].copy()
+        for i in range(df_ATOMIC_POSITIONS.shape[0]):
+            for j in range(Cartesian_axes.shape[0]):
+                target_label = df_ATOMIC_POSITIONS["label"].iloc[i]
+                target_symbol = df_ATOMIC_POSITIONS["symbol"].iloc[i]
+                target_xyz = df_ATOMIC_POSITIONS[["str_x", "str_y", "str_z"]].iloc[i].values.astype("float")
+                if target_symbol == Cartesian_axes["atom"].iloc[j]:
+                    before_xyz = before_arr[j]
+                    after_xyz = after_arr[j]
+                    if np.linalg.norm(target_xyz - before_xyz, ord=2) <= 1e-4:
+                        df_ATOMIC_POSITIONS.loc[target_label, "str_x"] = "{:.05f}".format(round_half(after_xyz[0]))
+                        df_ATOMIC_POSITIONS.loc[target_label, "str_y"] = "{:.05f}".format(round_half(after_xyz[1]))
+                        df_ATOMIC_POSITIONS.loc[target_label, "str_z"] = "{:.05f}".format(round_half(after_xyz[2]))
+                        break
+                    before_xyz = (before_xyz + 0.5) % 1
+                    after_xyz = (after_xyz + 0.5) % 1
+                    if np.linalg.norm(target_xyz - before_xyz, ord=2) <= 1e-4:
+                        df_ATOMIC_POSITIONS.loc[target_label, "str_x"] = "{:.05f}".format(round_half(after_xyz[0]))
+                        df_ATOMIC_POSITIONS.loc[target_label, "str_y"] = "{:.05f}".format(round_half(after_xyz[1]))
+                        df_ATOMIC_POSITIONS.loc[target_label, "str_z"] = "{:.05f}".format(round_half(after_xyz[2]))
+                        break
+                    else:
+                        found_all = False
+                        break
+            if not found_all:
+                break
+        if found_all:
+            break
+    if not found_all:
+        raise
     return_params["df_ATOMIC_POSITIONS"] = df_ATOMIC_POSITIONS
     return return_params
 
