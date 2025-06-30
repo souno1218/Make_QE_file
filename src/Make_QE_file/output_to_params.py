@@ -213,21 +213,19 @@ def vc_relax_output_to_params(import_out_path, base_params):
             case 0:
                 # Cartesian_axes(0) @ a2c
                 before_arr = (Cartesian_axes[["x", "y", "z"]].values @ alat_to_crystal).copy()
-                print(before_arr)
                 # ATOMIC_POSITIONS @ crystal axes(0) @ a2c
                 after_arr = (ATOMIC_POSITIONS[["x", "y", "z"]].values @ crystal_axes @ alat_to_crystal).copy()
             case 1:
                 before_arr = (Cartesian_axes[["x", "y", "z"]].values @ reciprocal_axes.T).copy()
                 after_arr = ATOMIC_POSITIONS[["x", "y", "z"]].values.copy()
-        print(before_arr)
-        print(after_arr)
         found_all = True
         df_ATOMIC_POSITIONS = return_params["df_ATOMIC_POSITIONS"].copy()
         for i in range(df_ATOMIC_POSITIONS.shape[0]):
+            target_label = df_ATOMIC_POSITIONS["label"].iloc[i]
+            target_symbol = df_ATOMIC_POSITIONS["symbol"].iloc[i]
+            target_xyz = df_ATOMIC_POSITIONS[["str_x", "str_y", "str_z"]].iloc[i].values.astype("float")
+            found = False
             for j in range(Cartesian_axes.shape[0]):
-                target_label = df_ATOMIC_POSITIONS["label"].iloc[i]
-                target_symbol = df_ATOMIC_POSITIONS["symbol"].iloc[i]
-                target_xyz = df_ATOMIC_POSITIONS[["str_x", "str_y", "str_z"]].iloc[i].values.astype("float")
                 if target_symbol == Cartesian_axes["atom"].iloc[j]:
                     before_xyz = before_arr[j]
                     after_xyz = after_arr[j]
@@ -235,6 +233,7 @@ def vc_relax_output_to_params(import_out_path, base_params):
                         df_ATOMIC_POSITIONS.loc[target_label, "str_x"] = "{:.05f}".format(round_half(after_xyz[0]))
                         df_ATOMIC_POSITIONS.loc[target_label, "str_y"] = "{:.05f}".format(round_half(after_xyz[1]))
                         df_ATOMIC_POSITIONS.loc[target_label, "str_z"] = "{:.05f}".format(round_half(after_xyz[2]))
+                        found = True
                         break
                     before_xyz = (before_xyz + 0.5) % 1
                     after_xyz = (after_xyz + 0.5) % 1
@@ -242,11 +241,10 @@ def vc_relax_output_to_params(import_out_path, base_params):
                         df_ATOMIC_POSITIONS.loc[target_label, "str_x"] = "{:.05f}".format(round_half(after_xyz[0]))
                         df_ATOMIC_POSITIONS.loc[target_label, "str_y"] = "{:.05f}".format(round_half(after_xyz[1]))
                         df_ATOMIC_POSITIONS.loc[target_label, "str_z"] = "{:.05f}".format(round_half(after_xyz[2]))
+                        found = True
                         break
-                    else:
-                        found_all = False
-                        break
-            if not found_all:
+            if not found:
+                found_all = False
                 break
         if found_all:
             break
