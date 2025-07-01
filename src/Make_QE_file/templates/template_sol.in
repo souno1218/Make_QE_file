@@ -23,6 +23,7 @@
  ntyp = 5,                ! change
  ecutwfc = 55.0,          ! change
  ecutrho = 323.0          ! change
+ origin_choice = 2,
  input_dft = 'PBEsol',
  occupations = 'smearing'
  smearing = 'm-p'
