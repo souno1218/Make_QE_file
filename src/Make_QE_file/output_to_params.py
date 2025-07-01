@@ -119,6 +119,7 @@ def relax_output_to_params(import_out_path, base_params):
                     after_xyz = after_arr[j]
                     d = target_xyz - before_xyz
                     d -= np.isclose(d, 1)
+                    d += np.isclose(d, -1)
                     if np.linalg.norm(d, ord=2) <= 1e-4:
                         df_ATOMIC_POSITIONS.loc[target_label, "str_x"] = "{:.05f}".format(round_half(after_xyz[0]))
                         df_ATOMIC_POSITIONS.loc[target_label, "str_y"] = "{:.05f}".format(round_half(after_xyz[1]))
@@ -129,6 +130,7 @@ def relax_output_to_params(import_out_path, base_params):
                     after_xyz = (after_xyz + 0.5) % 1
                     d = target_xyz - before_xyz
                     d -= np.isclose(d, 1)
+                    d += np.isclose(d, -1)
                     if np.linalg.norm(d, ord=2) <= 1e-4:
                         df_ATOMIC_POSITIONS.loc[target_label, "str_x"] = "{:.05f}".format(round_half(after_xyz[0]))
                         df_ATOMIC_POSITIONS.loc[target_label, "str_y"] = "{:.05f}".format(round_half(after_xyz[1]))
