@@ -27,7 +27,6 @@ pip install git+[https://github.com/souno1218/Make_QE_file.git](https://github.c
 ```
 
 ## Workflow
-
 The anticipated workflow is:   
 1.  relax -> vc-relax   
 2.  1 -> scf -> nscf -> projwfc -> dos   
@@ -36,6 +35,38 @@ The anticipated workflow is:
    
 (I used to separate directories by number for these steps).   
 `how_to_use/auto.py` contains instructions on how to use each function in the workflow described above.   
+
+## About crystal_sg
+For specifying atomic positions, we utilize ATOMIC_POSITIONS {crystal_sg}.   
+According to the official documentation:   
+> crystal_sg :
+> atomic positions are in crystal coordinates, i.e. in relative coordinates of the primitive lattice.   
+> This option differs from the previous one because in this case only the symmetry inequivalent atoms are given.   
+> The variable space_group must indicate the space group number used to find the symmetry equivalent atoms.   
+> The other variables that control this option are uniqueb, origin_choice, and rhombohedral.   
+
+Therefore, for this option, the _space_group_IT_number (or _symmetry_Int_Tables_number) in the CIF file is required.   
+
+## Encountered Issues
+A list of issues encountered that are somewhat related, though not directly tied to this module.   
+
+#### Memory Error with IntelMPI 2021.10 and QE 7.2
+```text
+= BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
+= RANK 31 PID 1078176 RUNNING AT pc~~~~~
+= KILLED BY SIGNAL: 9 (Killed)
+```
+When a calculation terminates with this error, it often indicates a memory issue.   
+Specifically, we observed continuous memory consumption growth when using the combination of **Intel MPI 2021.10.0** and **Quantum ESPRESSO 7.2**.   
+This issue was not observed when using **Intel MPI 2021.10.0** with **Quantum ESPRESSO 6.8**.   
+
+#### crystal_sg Fails to Expand Correctly
+While performing calculations for a material with space_group = 129,    
+we noticed that the output expanded into an unusually large cell.   
+Upon inspection with VESTA, it was clearly incorrect.   
+After some investigation, changing `origin_choice` from its default value of 1 to 2 resolved the issue.   
+Therefore, `origin_choice = 2` has been included in the template.   
+
 
 ## Usage and Functions
 -----

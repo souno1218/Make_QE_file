@@ -38,6 +38,38 @@ pip install git+https://github.com/souno1218/Make_QE_file.git
 です(自分は数字ごとにディレクトリを分けてました)。   
 `how_to_use/auto.py`では上記の流れでの各関数の使用方法を書いています。   
 
+## crystal_sgについて
+原子位置の指定でATOMIC_POSITIONS {crystal_sg}を使用しています。
+公式の説明は
+> crystal_sg :
+> 原子位置は結晶座標、すなわち原始格子の相対座標で指定する。
+> この場合、対称性のない原子のみが与えられるので、このオプションは前のものと異なる。
+> 変数space_groupは、対称等価原子を見つけるために使われる空間群番号を示さなければならない。
+> このオプションを制御する他の変数は uniqueb, origin_choice, rhombohedral である。
+
+とのこと。
+このためcifで_space_group_IT_number(or _symmetry_Int_Tables_number)が必要です。
+
+## 遭遇した問題
+このModuleとは直接関係がないとも言えないくらいの距離感の遭遇した問題の列挙   
+
+#### IntelMPI 2021.10とQE7.2でメモリーエラー
+```text
+= BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
+= RANK 31 PID 1078176 RUNNING AT pc~~~~~
+= KILLED BY SIGNAL: 9 (Killed)
+```
+というエラーが出て計算が止まる場合、メモリの問題が多い。   
+特に「Intel MPI 2021.10.0」と「Quantum ESPRESSO 7.2」の組み合わせで使用メモリが増え続けることを確認。   
+「IntelMPI 2021.10.0」と「QE6.8」では起きないことを確認。   
+
+#### crystal_sgがうまく展開してくれない
+space_group = 129の物質を計算しているときに、outputをみるとやたら大きなセルに展開していました。   
+VESTAでみると明らかに間違っている。   
+色々調べると、origin_choiceを初期値の1から2に変更するとうまくいきました。   
+templateには`origin_choice = 2`を入れています。   
+
+
 ## 使用方法と機能
 
 ---
