@@ -1,9 +1,7 @@
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.ticker as mticker
-import os, glob, re
 from decimal import Decimal, ROUND_HALF_UP
+import os, glob, re
 
 # https://qiita.com/xa_member/items/a519c53b63df75a68894
 
@@ -145,11 +143,7 @@ def check_JOB_DONE(calc, QE_out_path):
         return False
 
 
-def check_output(import_out_path, prefix=None, figsize=(12, 4), save_path=None): # save_path引数を追加
-    if not os.path.exists(import_out_path):
-        print(f"Error: Input file not found: {import_out_path}")
-        return None
-    
+def check_scf_out(import_out_path):
     with open(import_out_path, "r") as f:
         out_data = f.readlines()
         list_total_energy = []
@@ -162,159 +156,35 @@ def check_output(import_out_path, prefix=None, figsize=(12, 4), save_path=None):
                     try:
                         list_total_energy.append(float(line_split[j]))
                         break
-                    except ValueError: # floatへの変換エラーを具体的に捕獲
+                    except ValueError:  # floatへの変換エラーを具体的に捕獲
                         pass
             if "Total force =" in out_data[i]:
                 for j in range(len(line_split)):
                     try:
                         list_Total_force.append(float(line_split[j]))
                         break
-                    except ValueError: # floatへの変換エラーを具体的に捕獲
+                    except ValueError:  # floatへの変換エラーを具体的に捕獲
                         pass
             if "(kbar)" in out_data[i] and "P" in out_data[i]:
                 for j in range(len(line_split)):
                     if "P" in line_split[j]:
                         try:
                             list_P.append(float(line_split[j + 1]))
-                            break # 値が見つかったらループを抜ける
-                        except (ValueError, IndexError): # 複数エラーを捕獲
+                            break  # 値が見つかったらループを抜ける
+                        except (ValueError, IndexError):  # 複数エラーを捕獲
                             pass
-    fig, axes = plt.subplots(1, 3, figsize=figsize)
-    if not prefix is None:
-        fig.suptitle(prefix, fontsize=16)
-    data_sets = [
-        (list_total_energy, "Total Energy (Ry)", "r"),
-        (list_Total_force, "Total Force", "g"),
-        (list_P, "Pressure (kbar)", "b")
-    ]
-
-
-    # テキスト表示のオフセット量（データ座標単位）
-    # Y軸方向のオフセットをグラフ高さの2%とする
-    text_offset_y_factor = 0.02
-    # X軸方向のオフセットをグラフ幅の1%とする
-    text_offset_x_factor = 0.01
-
-    for idx, (data_list, title, color) in enumerate(data_sets):
-        ax = axes[idx]
-        ax.set_title(title)
-
-        # データがない場合はプロットせずにメッセージを表示
-        if not data_list:
-            ax.text(0.5, 0.5, "No data found", transform=ax.transAxes,
-                    ha='center', va='center', fontsize=12, color='gray')
-            ax.set_xticks([])
-            ax.set_yticks([])
-            continue
-
-        ax.plot(range(len(data_list)), data_list, color=color)
-
-        # X軸の目盛りを整数にする設定
-        ax.xaxis.set_major_locator(mticker.MaxNLocator(integer=True))
-
-        # 最初の点と最後の点に数値をプロット
-        if len(data_list) > 0:
-
-            # Y軸の表示範囲を取得してYオフセット量を動的に計算
-            y_min, y_max = ax.get_ylim()
-            current_y_offset = (y_max - y_min) * text_offset_y_factor
-            
-            # X軸の表示範囲を取得してXオフセット量を動的に計算
-            x_min, x_max = ax.get_xlim()
-            current_x_offset = (x_max - x_min) * text_offset_x_factor
-
-            # データリストの平均値を計算 (NaNや空リストを考慮)
-            data_mean = np.mean(data_list) if data_list else 0
-            
-            # 最初の点
-            first_idx, first_val = 0, data_list[0]
-            
-            # Y値が平均より上か下かでテキストの垂直位置を決定
-            if first_val >= data_mean: # 平均以上なら下にオフセット
-                text_first_y_offset = -current_y_offset
-                first_va = 'top' # テキストの上端をデータポイントに合わせる
-            else: # 平均より下なら上にオフセット
-                text_first_y_offset = current_y_offset
-                first_va = 'bottom' # テキストの下端をデータポイントに合わせる
-
-            # X軸方向のオフセットは右に
-            ax.text(first_idx + current_x_offset, first_val + text_first_y_offset,
-                    f'{first_val:.6f}',
-                    ha='left', va=first_va, fontsize=8, color='blue',
-                    bbox=dict(boxstyle='round,pad=0.2', fc='yellow', ec='none', alpha=0.7))
-            ax.scatter(first_idx, first_val, color=color, s=20, zorder=5)
-
-            # 最後の点
-            last_idx, last_val = len(data_list) - 1, data_list[-1]
-            
-            # Y値が平均より上か下かでテキストの垂直位置を決定
-            if last_val >= data_mean: # 平均以上なら下にオフセット
-                text_last_y_offset = -current_y_offset
-                last_va = 'top'
-            else: # 平均より下なら上にオフセット
-                text_last_y_offset = current_y_offset
-                last_va = 'bottom'
-
-            # X軸方向のオフセットは左に
-            ax.text(last_idx - current_x_offset, last_val + text_last_y_offset,
-                    f'{last_val:.6f}',
-                    ha='right', va=last_va, fontsize=8, color='blue',
-                    bbox=dict(boxstyle='round,pad=0.2', fc='yellow', ec='none', alpha=0.7))
-            ax.scatter(last_idx, last_val, color=color, s=20, zorder=5)
-
-            # データの差をグラフ内に表示
-            data_range = last_val - first_val
-
-            # Y軸のデータ範囲に基づいてテキスト位置を決定
-            y_min, y_max = ax.get_ylim()
-            y_span = y_max - y_min
-
-            # 最後のデータポイントがサブプロットのY軸のどこにあるか確認
-            # 例えば、下1/3にいるならテキストを上に、上1/3にいるならテキストを下に配置
-            relative_last_y = (last_val - y_min) / y_span
-
-            if relative_last_y < 0.33: # グラフの下1/3に最後のデータがある場合
-                # テキストを上に配置 (va='top')
-                text_va = 'top'
-                text_y_pos = 0.98 # Axes座標のY軸の上端近く
-            elif relative_last_y > 0.66: # グラフの上1/3に最後のデータがある場合
-                # テキストを下に配置 (va='bottom')
-                text_va = 'bottom'
-                text_y_pos = 0.02 # Axes座標のY軸の下端近く
-            else: # 中間の場合 (デフォルトの右下)
-                text_va = 'bottom'
-                text_y_pos = 0.02
-
-            ax.text(0.98, text_y_pos, # Xは右端に固定、Yは動的に決定
-                    f'Diff: {data_range:.6f}',
-                    transform=ax.transAxes,
-                    ha='right', va=text_va, fontsize=9,
-                    bbox=dict(boxstyle='round,pad=0.3', fc='wheat', ec='k', lw=0.5, alpha=0.7))
-
-        ax.grid(True)
-        ax.set_xlabel("Step") # 共通のX軸ラベル
-
-    plt.tight_layout(rect=[0, 0, 1, 0.96]) # 全体タイトルと重ならないように調整
-
-    # 画像の保存ロジック
-    if save_path: # save_pathがNoneでない場合（つまり、保存したい場合）
-        if not isinstance(save_path, str) or not save_path: # 文字列でない、または空文字列の場合
-            print("Error: Invalid save_path provided. Please provide a valid string path.")
-        else:
-            try:
-                # ディレクトリが存在しない場合は作成
-                output_dir = os.path.dirname(save_path)
-                if output_dir and not os.path.exists(output_dir):
-                    os.makedirs(output_dir)
-                plt.savefig(save_path)
-                print(f"Plot saved successfully to: {save_path}")
-            except Exception as e:
-                print(f"Error saving plot to {save_path}: {e}")
-
-    plt.show() # 保存する場合もしない場合も、画面には表示する
+    if len(list_total_energy) == 1:
+        if len(list_Total_force) == 1:
+            if len(list_P) == 1:
+                return list_total_energy[0], list_Total_force[0], list_P[0]
+    # print(len(list_total_energy), len(list_Total_force), len(list_P))
 
 
 def make_angle(vec0, vec1):
     norm_vec0 = np.linalg.norm(vec0, ord=2)
     norm_vec1 = np.linalg.norm(vec1, ord=2)
     return np.degrees(np.arccos((vec0 @ vec1) / (norm_vec0 * norm_vec1)))
+
+
+def bohr2angs(x):
+    return x * 0.5291772083
