@@ -119,7 +119,7 @@ cif_to_paramsで作成したような結晶情報のdictからinputを作成し�
 - `params_structure=None` (dict)   
   calc = scf,nscf,relax,vc-relax,bandsで使用(必須)   
   cif_to_paramsなどで作成した構造データを入れる   
-- `k_fineness_Magnification=None`　(int)   
+- `K_point_Density_Product=None`　(int)   
   calc = scf,nscf,relax,vc-relaxで使用   
   参考にしたサイト曰く「格子定数 x k点メッシュ数 = 10 ~ 12 Å 」という決め方に則って、この「10 ~ 12 Å」を指定します   
   何も指定しない場合大きめにとって20Åが入ります   

@@ -116,7 +116,7 @@ The structure will be written into the input file as `{crystal_sg}`, so `params_
   - `params_structure=None` (dict)   
     Used with `calc` = scf, nscf, relax, vc-relax, bands (required).   
     Input the structural data created by `cif_to_params` or similar.   
-  - `k_fineness_Magnification=None` (int)   
+  - `K_point_Density_Product=None` (int)   
     Used with `calc` = scf, nscf, relax, vc-relax.   
     According to a referenced site, it follows the rule "Lattice constant x K-point mesh = 10 \~ 12 Å". This parameter specifies that "10 ~ 12 Å" value.   
     If not specified, a larger value of 20 Å will be used.   

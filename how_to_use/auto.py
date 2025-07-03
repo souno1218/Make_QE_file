@@ -9,25 +9,23 @@ import pandas as pd
 
 os.chdir("/home/hpc/QE_dir")
 
-df = pd. read_excel("base_data.xlsx")
+df = pd.read_excel("base_data.xlsx")
 
-list_structure_name = [i[:-2] if (i.split("_")[-1] in ["y", "n"]) else i for i in list(df ["name"].values)]
-dict_phase = {list_structure_name[i]:df["phase"].values[i] for i in range(len(list_structure_name))}
+list_structure_name = [i[:-2] if (i.split("_")[-1] in ["y", "n"]) else i for i in list(df["name"].values)]
+dict_phase = {list_structure_name[i]: df["phase"].values[i] for i in range(len(list_structure_name))}
 
 ls_file_name = os.listdir("old_cif_dir")
 
-dict_brilloin_zone_path = {212 : ["gG"],
-                           325 : ["gG"],
-                           426 : ["gG"]}
+dict_brilloin_zone_path = {212: ["gG"], 325: ["gG"], 426: ["gG"]}
 
 dict_color_dict = {}
 
 for i in range(len(list_structure_name)):
-    dict_color_dict[list_structure_name[i]] = {df.loc[i, "O"] : "c"}
+    dict_color_dict[list_structure_name[i]] = {df.loc[i, "O"]: "c"}
 
-dict_ibrav = {22212 : 7, 22325 : 7, 22426 : 6}
+dict_ibrav = {22212: 7, 22325: 7, 22426: 6}
 
-k_fineness_Magnification = 20
+K_point_Density_Product = 20
 fix = True
 
 pseudo_dir = "/home/hpc/QE_dir/UPF"
@@ -68,7 +66,7 @@ for structure_name in list_structure_name:
             prefix,
             pseudo_dir=pseudo_dir,
             params_structure=params_structure,
-            k_fineness_Magnification=k_fineness_Magnification,
+            K_point_Density_Product=K_point_Density_Product,
             fix=fix,
             template_path=temp_scf,
         )
@@ -92,7 +90,7 @@ for structure_name in list_structure_name:
             prefix,
             pseudo_dir=pseudo_dir,
             params_structure=params_structure,
-            k_fineness_Magnification=k_fineness_Magnification,
+            K_point_Density_Product=K_point_Density_Product,
             fix=fix,
             template_path=temp_scf,
         )
@@ -122,7 +120,7 @@ for structure_name in list_structure_name:
             prefix,
             pseudo_dir=pseudo_dir,
             params_structure=params_structure,
-            k_fineness_Magnification=k_fineness_Magnification,
+            K_point_Density_Product=K_point_Density_Product,
             template_path=temp_scf,
         )
         command = f"mpirun -np 32 pw.x <{input_path} >{output_path}"
@@ -145,7 +143,7 @@ for structure_name in list_structure_name:
             prefix,
             pseudo_dir=pseudo_dir,
             params_structure=params_structure,
-            k_fineness_Magnification=k_fineness_Magnification,
+            K_point_Density_Product=K_point_Density_Product,
             nbnd=nbnd,
             template_path=temp_scf,
         )
@@ -197,7 +195,7 @@ for structure_name in list_structure_name:
             prefix,
             pseudo_dir=pseudo_dir,
             params_structure=params_structure,
-            k_fineness_Magnification=k_fineness_Magnification,
+            K_point_Density_Product=K_point_Density_Product,
             template_path=temp_scf,
         )
         command = f"mpirun -np 32 pw.x <{input_path} >{output_path}"
@@ -266,13 +264,35 @@ for structure_name in list_structure_name:
         highest_occupied = get_highest_occupied(nscf_out_path)
         print(f"{structure_name} : highest_occupied = {highest_occupied}")
         savefig_path = f"{structure_dir}/{structure_name}.pdos_highest_occupied.png"
-        plot_pdos (pdos_dir_path, highest_occupied=highest_occupied, savefig_path=savefig_path, is_save=True, color_dict=color_dict)
+        plot_pdos(
+            pdos_dir_path,
+            highest_occupied=highest_occupied,
+            savefig_path=savefig_path,
+            is_save=True,
+            color_dict=color_dict,
+        )
         savefig_path = f"{structure_dir}/{structure_name}.bands_highest_occupied.png"
-        plot_band(gnu_path, k_point_divisions, brilloin_zone_path, highest_occupied=highest_occupied, is_save=True, savefig_path=savefig_path, ylim= [-5, 5])
+        plot_band(
+            gnu_path,
+            k_point_divisions,
+            brilloin_zone_path,
+            highest_occupied=highest_occupied,
+            is_save=True,
+            savefig_path=savefig_path,
+            ylim=[-5, 5],
+        )
     except:
         pass
     savefig_path = f"{structure_dir}/{structure_name}.pdos_efermi.png"
-    plot_pdos (pdos_dir_path, EFermi=EFermi, savefig_path=savefig_path, is_save=True, color_dict=color_dict)
+    plot_pdos(pdos_dir_path, EFermi=EFermi, savefig_path=savefig_path, is_save=True, color_dict=color_dict)
     savefig_path = f"{structure_dir}/{structure_name}.bands_efermi.png"
-    plot_band(gnu_path, k_point_divisions, brilloin_zone_path, EFermi=EFermi, is_save=True, savefig_path=savefig_path, ylim=[-5, 5])
+    plot_band(
+        gnu_path,
+        k_point_divisions,
+        brilloin_zone_path,
+        EFermi=EFermi,
+        is_save=True,
+        savefig_path=savefig_path,
+        ylim=[-5, 5],
+    )
 print("ALL DONE", flush=True)

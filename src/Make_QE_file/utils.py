@@ -62,7 +62,7 @@ def check_args(is_None_continue, **kwargs):
                     raise TypeError(f"The argument {i} must be str")
                 if kwargs[i] < 0:
                     raise ValueError(f"The argument {i} must be str")
-            case "k_fineness_Magnification":
+            case "K_point_Density_Product":
                 if not isinstance(kwargs[i], (int, float)):
                     raise TypeError(f"The argument {i} must be int or float")
             case "nbnd":

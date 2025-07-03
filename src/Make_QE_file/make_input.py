@@ -14,7 +14,7 @@ def make_input(
     pseudo_dir=None,  # only use in scf,nscf,relax,vc-relax,bands
     params_structure=None,  # only use in scf,nscf,relax,vc-relax,bands
     min_kpoint=None,  # only use in scf,nscf,relax,vc-relax
-    k_fineness_Magnification=None,  # only use in scf,nscf,relax,vc-relax
+    K_point_Density_Product=None,  # only use in scf,nscf,relax,vc-relax
     fix=False,  # only use in scf,nscf,relax,vc-relax
     nbnd=None,  # only use in nscf, bands
     brilloin_zone_path=None,  # only use in bands
@@ -36,7 +36,7 @@ def make_input(
                 True,
                 template_path=template_path,
                 min_kpoint=min_kpoint,
-                k_fineness_Magnification=k_fineness_Magnification,
+                K_point_Density_Product=K_point_Density_Product,
                 brilloin_zone_path=brilloin_zone_path,
                 k_point_divisions=k_point_divisions,
                 nbnd=nbnd,
@@ -50,7 +50,7 @@ def make_input(
                 params_structure,
                 template_path=template_path,
                 min_kpoint=min_kpoint,  # only use in scf,nscf,relax,vc-relax
-                k_fineness_Magnification=k_fineness_Magnification,  # only use in scf,nscf,relax,vc-relax
+                K_point_Density_Product=K_point_Density_Product,  # only use in scf,nscf,relax,vc-relax
                 fix=fix,  # only use in scf,nscf,relax,vc-relax
                 brilloin_zone_path=brilloin_zone_path,  # only use in bands
                 k_point_divisions=k_point_divisions,  # only use in bands
@@ -78,7 +78,7 @@ def sub_make_input(
     params_structure,
     template_path=None,
     min_kpoint=None,  # only use in scf,nscf,relax,vc-relax
-    k_fineness_Magnification=None,  # only use in scf,nscf,relax,vc-relax
+    K_point_Density_Product=None,  # only use in scf,nscf,relax,vc-relax
     fix=False,  # only use in scf,nscf,relax,vc-relax
     brilloin_zone_path=None,  # only use in bands
     k_point_divisions=None,  # only use in bands
@@ -320,7 +320,7 @@ def sub_make_input(
         lattice,
         calc,
         min_kpoint=min_kpoint,
-        k_fineness_Magnification=k_fineness_Magnification,
+        K_point_Density_Product=K_point_Density_Product,
         brilloin_zone_path=brilloin_zone_path,
         k_point_divisions=k_point_divisions,
     )
@@ -557,21 +557,21 @@ def make_pseudo_path_num_ecut(pseudo_dir, df_ATOMIC_POSITIONS):
 
 
 def make_k_points(
-    lattice, calc, min_kpoint=None, k_fineness_Magnification=None, brilloin_zone_path=None, k_point_divisions=None
+    lattice, calc, min_kpoint=None, K_point_Density_Product=None, brilloin_zone_path=None, k_point_divisions=None
 ):
     # lattice = np.array([a, b, c])
     if not calc in ["relax", "vc-relax", "scf", "nscf", "bands"]:  #'md','vc-md' not support
         raise Exception(f"not support this calc : {calc}")
     match calc:
         case t if t in ["scf", "nscf", "relax", "vc-relax"]:
-            if k_fineness_Magnification is None:
-                k_fineness_Magnification = 20  # angs
+            if K_point_Density_Product is None:
+                K_point_Density_Product = 20  # angs
             if min_kpoint is None:
                 if calc == "nscf":
                     min_kpoint = 4
                 else:
                     min_kpoint = 2
-            k_points = np.ceil(k_fineness_Magnification / lattice).astype("int")
+            k_points = np.ceil(K_point_Density_Product / lattice).astype("int")
             k_points[k_points < min_kpoint] = min_kpoint
             k_points_text = ""
             for i in k_points:
