@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
-import glob, re, os
+import glob, re, os, time, threading
 
 
 def plot_band(
@@ -17,6 +17,7 @@ def plot_band(
     ylim=[-5, 5],
     figsize=(10, 7),
 ):
+    plt.close("all")
     fig = plt.figure(figsize=figsize)
     ax = fig.add_subplot(111)  # Axesオブジェクトを明示的に取得
 
@@ -200,6 +201,7 @@ def plot_pdos(
     color_dict=None,
     figsize=(8, 6),
 ):
+    plt.close("all")
     fig = plt.figure(figsize=figsize)
     ax = fig.add_subplot(111)  # Axesオブジェクトを明示的に取得
 
@@ -435,6 +437,7 @@ def plot_relax_out(import_out_path, title=None, figsize=(12, 4), save_path=None)
                             break  # 値が見つかったらループを抜ける
                         except (ValueError, IndexError):  # 複数エラーを捕獲
                             pass
+    plt.close("all")
     fig, axes = plt.subplots(1, 3, figsize=figsize)
     if not title is None:
         fig.suptitle(title, fontsize=16)
@@ -531,7 +534,10 @@ def plot_relax_out(import_out_path, title=None, figsize=(12, 4), save_path=None)
             ax.scatter(last_idx, last_val, color=color, s=20, zorder=5)
 
             # データの差をグラフ内に表示
-            data_range = last_val - first_val
+            if "Pressure (kbar)" == title:
+                data_range = np.abs(last_val) - np.abs(first_val)
+            else:
+                data_range = last_val - first_val
 
             # Y軸のデータ範囲に基づいてテキスト位置を決定
             y_min, y_max = ax.get_ylim()
@@ -587,6 +593,35 @@ def plot_relax_out(import_out_path, title=None, figsize=(12, 4), save_path=None)
     plt.show()  # 保存する場合もしない場合も、画面には表示する
 
 
+class MonitorPlotRelaxOut:
+    def __init__(self, import_out_path, save_path, title=None, figsize=(12, 4), interval=60):
+        self.import_out_path = import_out_path
+        self.save_path = save_path
+        self.title = title
+        self.figsize = figsize
+        self.interval = interval
+        self._is_in_progress = None
+        self._monitor_thread = None  # スレッドオブジェクトを保持
+
+    def __enter__(self):
+        self._is_in_progress = True
+        self._monitor_thread = threading.Thread(target=self._monitor_and_plot_loop)
+        self._monitor_thread.daemon = True  # メインスレッド終了時にスレッドも終了させる
+        self._monitor_thread.start()
+        return self
+
+    def __exit__(self):
+        self._is_in_progress = False
+        # final plot
+        plot_relax_out(self.import_out_path, title=self.title, figsize=self.figsize, save_path=self.save_path)
+
+    def _monitor_and_plot_loop(self):
+        time.sleep(self.interval)
+        while self._is_in_progress:
+            plot_relax_out(self.import_out_path, title=self.title, figsize=self.figsize, save_path=self.save_path)
+            time.sleep(self.interval)
+
+
 def plot_scf_out(
     kpoints, abc, total_energies, Total_forces, Ps, title=None, figsize=(12, 4), save_path=None
 ):  # save_path引数を追加
@@ -599,6 +634,7 @@ def plot_scf_out(
     Total_forces = np.array(Total_forces)[index]
     Ps = np.array(Ps)[index]
 
+    plt.close("all")
     fig, axes = plt.subplots(1, 3, figsize=figsize)
     if not title is None:
         fig.suptitle(title, fontsize=16)
@@ -648,9 +684,11 @@ def plot_scf_out(
             ax.scatter(i, data_list[i], color=color, s=20, zorder=5)
 
         if len(data_list) > 0:
-
             # データの差をグラフ内に表示
-            data_range = data_list[-1] - data_list[0]
+            if "Pressure (kbar)" == title:
+                data_range = np.abs(data_list[-1]) - np.abs(data_list[0])
+            else:
+                data_range = data_list[-1] - data_list[0]
 
             # Y軸のデータ範囲に基づいてテキスト位置を決定
             y_min, y_max = ax.get_ylim()
