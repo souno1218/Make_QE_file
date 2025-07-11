@@ -12,7 +12,7 @@ def plot_band(
     highest_occupied=None,
     title=None,
     is_save=False,
-    is_plot=False,
+    is_show=False,
     savefig_path=None,
     ylim=[-5, 5],
     figsize=(10, 7),
@@ -182,9 +182,8 @@ def plot_band(
             os.makedirs(output_dir)
         fig.savefig(savefig_path, dpi=300, bbox_inches="tight")  # figオブジェクトから保存
         print(f"Plot saved to: {savefig_path}")
-    if is_plot:
+    if is_show:
         plt.show()
-    plt.close(fig)
 
 
 def plot_pdos(
@@ -197,7 +196,7 @@ def plot_pdos(
     savefig_path=None,
     ylim=None,
     is_save=False,
-    is_plot=False,
+    is_show=False,
     color_dict=None,
     figsize=(8, 6),
 ):
@@ -398,12 +397,11 @@ def plot_pdos(
             os.makedirs(output_dir)
         fig.savefig(savefig_path, dpi=300, bbox_inches="tight")  # Figureオブジェクトから保存
         print(f"Plot saved to: {savefig_path}")
-    if is_plot:
+    if is_show:
         plt.show()
-    plt.close(fig)
 
 
-def plot_relax_out(import_out_path, title=None, figsize=(12, 4), save_path=None):  # save_path引数を追加
+def plot_relax_out(import_out_path, title=None, figsize=(12, 4), save_path=None, is_show=True):
     if not os.path.exists(import_out_path):
         print(f"Error: Input file not found: {import_out_path}")
         return None
@@ -589,12 +587,12 @@ def plot_relax_out(import_out_path, title=None, figsize=(12, 4), save_path=None)
                 print(f"Plot saved successfully to: {save_path}")
             except Exception as e:
                 print(f"Error saving plot to {save_path}: {e}")
-
-    plt.show()  # 保存する場合もしない場合も、画面には表示する
+    if is_show:
+        plt.show()
 
 
 class MonitorPlotRelaxOut:
-    def __init__(self, import_out_path, save_path, title=None, figsize=(12, 4), interval=60):
+    def __init__(self, import_out_path, save_path=None, title=None, figsize=(12, 4), interval=60):
         self.import_out_path = import_out_path
         self.save_path = save_path
         self.title = title
@@ -623,8 +621,8 @@ class MonitorPlotRelaxOut:
 
 
 def plot_scf_out(
-    kpoints, abc, total_energies, Total_forces, Ps, title=None, figsize=(12, 4), save_path=None
-):  # save_path引数を追加
+    kpoints, abc, total_energies, Total_forces, Ps, title=None, figsize=(12, 4), save_path=None, is_show=True
+):
 
     kpoints = np.array(kpoints)
     index = np.argsort(np.sum((kpoints * abc) ** 2, axis=1))
@@ -741,4 +739,5 @@ def plot_scf_out(
             except Exception as e:
                 print(f"Error saving plot to {save_path}: {e}")
 
-    plt.show()  # 保存する場合もしない場合も、画面には表示する
+    if is_show:
+        plt.show()
