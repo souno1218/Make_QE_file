@@ -592,12 +592,13 @@ def plot_relax_out(import_out_path, title=None, figsize=(12, 4), save_path=None,
 
 
 class MonitorPlotRelaxOut:
-    def __init__(self, import_out_path, save_path=None, title=None, figsize=(12, 4), interval=60):
+    def __init__(self, import_out_path, save_path=None, is_show=False, title=None, figsize=(12, 4), interval=60):
         self.import_out_path = import_out_path
         self.save_path = save_path
         self.title = title
         self.figsize = figsize
         self.interval = interval
+        self.is_show = is_show
         self._is_in_progress = None
         self._monitor_thread = None  # スレッドオブジェクトを保持
 
@@ -611,12 +612,20 @@ class MonitorPlotRelaxOut:
     def __exit__(self):
         self._is_in_progress = False
         # final plot
-        plot_relax_out(self.import_out_path, title=self.title, figsize=self.figsize, save_path=self.save_path)
+        plot_relax_out(
+            self.import_out_path, title=self.title, figsize=self.figsize, save_path=self.save_path, is_show=self.is_show
+        )
 
     def _monitor_and_plot_loop(self):
         time.sleep(self.interval)
         while self._is_in_progress:
-            plot_relax_out(self.import_out_path, title=self.title, figsize=self.figsize, save_path=self.save_path)
+            plot_relax_out(
+                self.import_out_path,
+                title=self.title,
+                figsize=self.figsize,
+                save_path=self.save_path,
+                is_show=self.is_show,
+            )
             time.sleep(self.interval)
 
 
