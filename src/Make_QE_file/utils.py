@@ -143,43 +143,6 @@ def check_JOB_DONE(calc, QE_out_path):
         return False
 
 
-def check_scf_out(import_out_path):
-    with open(import_out_path, "r") as f:
-        out_data = f.readlines()
-        list_total_energy = []
-        list_Total_force = []
-        list_P = []
-        for i in range(len(out_data)):
-            line_split = out_data[i].split()
-            if "!" in out_data[i] and "total energy" in out_data[i]:
-                for j in range(len(line_split)):
-                    try:
-                        list_total_energy.append(float(line_split[j]))
-                        break
-                    except ValueError:  # floatへの変換エラーを具体的に捕獲
-                        pass
-            if "Total force =" in out_data[i]:
-                for j in range(len(line_split)):
-                    try:
-                        list_Total_force.append(float(line_split[j]))
-                        break
-                    except ValueError:  # floatへの変換エラーを具体的に捕獲
-                        pass
-            if "(kbar)" in out_data[i] and "P" in out_data[i]:
-                for j in range(len(line_split)):
-                    if "P" in line_split[j]:
-                        try:
-                            list_P.append(float(line_split[j + 1]))
-                            break  # 値が見つかったらループを抜ける
-                        except (ValueError, IndexError):  # 複数エラーを捕獲
-                            pass
-    if len(list_total_energy) == 1:
-        if len(list_Total_force) == 1:
-            if len(list_P) == 1:
-                return list_total_energy[0], list_Total_force[0], list_P[0]
-    # print(len(list_total_energy), len(list_Total_force), len(list_P))
-
-
 def make_angle(vec0, vec1):
     norm_vec0 = np.linalg.norm(vec0, ord=2)
     norm_vec1 = np.linalg.norm(vec1, ord=2)

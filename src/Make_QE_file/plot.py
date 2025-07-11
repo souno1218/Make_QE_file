@@ -11,7 +11,6 @@ def plot_band(
     EFermi=None,
     highest_occupied=None,
     title=None,
-    is_save=False,
     is_show=False,
     savefig_path=None,
     ylim=[-5, 5],
@@ -23,11 +22,6 @@ def plot_band(
 
     if not title is None:
         fig.suptitle(title, fontsize=16)
-
-    # グラフ保存のチェックを最初に行う
-    if is_save:
-        if savefig_path is None or not isinstance(savefig_path, str) or not savefig_path.strip():
-            raise ValueError("Error: If 'is_save' is True, 'savefig_path' must be a valid non-empty string.")
 
     # gnuファイルが見つかるかチェック
     if not os.path.exists(gnu_path):
@@ -176,12 +170,19 @@ def plot_band(
     ax.grid(True, linestyle=":", alpha=0.7)
 
     # 画像の保存ロジック
-    if is_save:
-        output_dir = os.path.dirname(savefig_path)
-        if output_dir and not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-        fig.savefig(savefig_path, dpi=300, bbox_inches="tight")  # figオブジェクトから保存
-        print(f"Plot saved to: {savefig_path}")
+    if savefig_path:  # save_pathがNoneでない場合（つまり、保存したい場合）
+        if not isinstance(savefig_path, str) or not savefig_path:  # 文字列でない、または空文字列の場合
+            print("Error: Invalid save_path provided. Please provide a valid string path.")
+        else:
+            try:
+                # ディレクトリが存在しない場合は作成
+                output_dir = os.path.dirname(savefig_path)
+                if output_dir and not os.path.exists(output_dir):
+                    os.makedirs(output_dir)
+                plt.savefig(savefig_path, dpi=300, bbox_inches="tight")  # Figureオブジェクトから保存
+                print(f"Plot saved successfully to: {savefig_path}")
+            except Exception as e:
+                print(f"Error saving plot to {savefig_path}: {e}")
     if is_show:
         plt.show()
 
@@ -193,9 +194,8 @@ def plot_pdos(
     title=None,
     plot_list=["pdos"],
     xlim=[-10, 10],
-    savefig_path=None,
     ylim=None,
-    is_save=False,
+    savefig_path=None,
     is_show=False,
     color_dict=None,
     figsize=(8, 6),
@@ -206,11 +206,6 @@ def plot_pdos(
 
     if not title is None:
         fig.suptitle(title, fontsize=16)
-
-    # グラフ保存のチェックを最初に行う
-    if is_save:
-        if savefig_path is None or not isinstance(savefig_path, str) or not savefig_path.strip():
-            raise ValueError("Error: If 'is_save' is True, 'savefig_path' must be a valid non-empty string.")
 
     # フェルミ準位または最高被占準位の基準を設定
     if not highest_occupied is None:
@@ -391,12 +386,19 @@ def plot_pdos(
     ax.grid(True, linestyle=":", alpha=0.7)  # グリッド線を追加
 
     # 画像の保存ロジック
-    if is_save:
-        output_dir = os.path.dirname(savefig_path)
-        if output_dir and not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-        fig.savefig(savefig_path, dpi=300, bbox_inches="tight")  # Figureオブジェクトから保存
-        print(f"Plot saved to: {savefig_path}")
+    if savefig_path:  # save_pathがNoneでない場合（つまり、保存したい場合）
+        if not isinstance(savefig_path, str) or not savefig_path:  # 文字列でない、または空文字列の場合
+            print("Error: Invalid save_path provided. Please provide a valid string path.")
+        else:
+            try:
+                # ディレクトリが存在しない場合は作成
+                output_dir = os.path.dirname(savefig_path)
+                if output_dir and not os.path.exists(output_dir):
+                    os.makedirs(output_dir)
+                plt.savefig(savefig_path, dpi=300, bbox_inches="tight")  # Figureオブジェクトから保存
+                print(f"Plot saved successfully to: {savefig_path}")
+            except Exception as e:
+                print(f"Error saving plot to {savefig_path}: {e}")
     if is_show:
         plt.show()
 
@@ -583,8 +585,8 @@ def plot_relax_out(import_out_path, title=None, figsize=(12, 4), savefig_path=No
                 output_dir = os.path.dirname(savefig_path)
                 if output_dir and not os.path.exists(output_dir):
                     os.makedirs(output_dir)
-                plt.savefig(savefig_path)
-                print(f"Plot saved successfully to: {savefig_path}")
+                plt.savefig(savefig_path, dpi=300, bbox_inches="tight")
+                # print(f"Plot saved successfully to: {savefig_path}")
             except Exception as e:
                 print(f"Error saving plot to {savefig_path}: {e}")
     if is_show:
@@ -747,7 +749,7 @@ def plot_scf_out(
                 output_dir = os.path.dirname(savefig_path)
                 if output_dir and not os.path.exists(output_dir):
                     os.makedirs(output_dir)
-                plt.savefig(savefig_path)
+                plt.savefig(savefig_path, dpi=300, bbox_inches="tight")
                 print(f"Plot saved successfully to: {savefig_path}")
             except Exception as e:
                 print(f"Error saving plot to {savefig_path}: {e}")

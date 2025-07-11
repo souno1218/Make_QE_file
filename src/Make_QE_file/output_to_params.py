@@ -15,6 +15,7 @@ def output_to_params(calc, import_out_path, base_params):
     else:
         raise Exception("not support this calc : {calc}")
 
+
 # relax
 # Cartesian_axes     ： （拡張だけした）座標変換前の初期位置, alat units
 # ATOMIC_POSITIONS   : 座標変換後の（複数ある最後が)最終位置, crystal
@@ -41,6 +42,7 @@ def output_to_params(calc, import_out_path, base_params):
 # ATOMIC_POSITIONS @ crystal axes(0) @ a2c
 # -> 計算前後で各軸ののび
 # diag(CELL_PARAMETERS.T @ reciprocal axes(0))
+
 
 def relax_output_to_params(import_out_path, base_params):
     int_nan = -100
@@ -93,9 +95,9 @@ def relax_output_to_params(import_out_path, base_params):
                                 float(one_line_split[3]),
                             ]
                         break
-    alat_to_crystal = np.array([[1, 0, 0],
-                                [0, base_params["a"]/ base_params["b"], 0],
-                                [0, 0, base_params["a"]/ base_params["c"]]])
+    alat_to_crystal = np.array(
+        [[1, 0, 0], [0, base_params["a"] / base_params["b"], 0], [0, 0, base_params["a"] / base_params["c"]]]
+    )
     for k in range(2):
         match k:
             case 0:
@@ -207,9 +209,9 @@ def vc_relax_output_to_params(import_out_path, base_params):
                             [out_data[j + 1].split(), out_data[j + 2].split(), out_data[j + 3].split()]
                         ).astype("float64")
                         break
-    alat_to_crystal = np.array([[1, 0, 0],
-                                [0, base_params["a"]/ base_params["b"], 0],
-                                [0, 0, base_params["a"]/ base_params["c"]]])
+    alat_to_crystal = np.array(
+        [[1, 0, 0], [0, base_params["a"] / base_params["b"], 0], [0, 0, base_params["a"] / base_params["c"]]]
+    )
     # CELL_PARAMETERS.T @ reciprocal axes(0)
     ratio_abc = np.linalg.norm(CELL_PARAMETERS.T @ reciprocal_axes, axis=0, ord=2)
     return_params["a"] = round_half(base_params["a"] * ratio_abc[0])
@@ -217,9 +219,15 @@ def vc_relax_output_to_params(import_out_path, base_params):
     return_params["c"] = round_half(base_params["c"] * ratio_abc[2])
     match ibrav:
         case 0 | 5 | -5 | 12 | -12 | 12 | 13 | -13 | 14:
-            return_params["alpha"] = make_angle(CELL_PARAMETERS[1] @ alat_to_crystal, CELL_PARAMETERS[2] @ alat_to_crystal)
-            return_params["beta"] = make_angle(CELL_PARAMETERS[2] @ alat_to_crystal, CELL_PARAMETERS[0] @ alat_to_crystal)
-            return_params["gamma"] = make_angle(CELL_PARAMETERS[0] @ alat_to_crystal, CELL_PARAMETERS[1] @ alat_to_crystal)
+            return_params["alpha"] = make_angle(
+                CELL_PARAMETERS[1] @ alat_to_crystal, CELL_PARAMETERS[2] @ alat_to_crystal
+            )
+            return_params["beta"] = make_angle(
+                CELL_PARAMETERS[2] @ alat_to_crystal, CELL_PARAMETERS[0] @ alat_to_crystal
+            )
+            return_params["gamma"] = make_angle(
+                CELL_PARAMETERS[0] @ alat_to_crystal, CELL_PARAMETERS[1] @ alat_to_crystal
+            )
         case _:
             return_params["alpha"] = base_params["alpha"]
             return_params["beta"] = base_params["beta"]
@@ -342,3 +350,40 @@ def get_highest_occupied(output_path):
                         None
                 return highest_occupied_level
     raise ValueError(f"Error: highest occupied level not found in {output_path}.")
+
+
+def check_scf_out(import_out_path):
+    with open(import_out_path, "r") as f:
+        out_data = f.readlines()
+        list_total_energy = []
+        list_Total_force = []
+        list_P = []
+        for i in range(len(out_data)):
+            line_split = out_data[i].split()
+            if "!" in out_data[i] and "total energy" in out_data[i]:
+                for j in range(len(line_split)):
+                    try:
+                        list_total_energy.append(float(line_split[j]))
+                        break
+                    except ValueError:  # floatへの変換エラーを具体的に捕獲
+                        pass
+            if "Total force =" in out_data[i]:
+                for j in range(len(line_split)):
+                    try:
+                        list_Total_force.append(float(line_split[j]))
+                        break
+                    except ValueError:  # floatへの変換エラーを具体的に捕獲
+                        pass
+            if "(kbar)" in out_data[i] and "P" in out_data[i]:
+                for j in range(len(line_split)):
+                    if "P" in line_split[j]:
+                        try:
+                            list_P.append(float(line_split[j + 1]))
+                            break  # 値が見つかったらループを抜ける
+                        except (ValueError, IndexError):  # 複数エラーを捕獲
+                            pass
+    if len(list_total_energy) == 1:
+        if len(list_Total_force) == 1:
+            if len(list_P) == 1:
+                return list_total_energy[0], list_Total_force[0], list_P[0]
+    # print(len(list_total_energy), len(list_Total_force), len(list_P))

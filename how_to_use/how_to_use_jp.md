@@ -246,15 +246,17 @@ band計算によって作成されるgnuファイルを入れることで、band
   基準として、グラフの0を定める   
   read_highest_occupiedで探した値を入れる   
   EFermiかhighest_occupiedのどちらかは必要   
-- `is_save=False` (bool)   
-  保存を行うかどうか   
-- `is_plot=False` (bool)   
-  plotするかどうか、対話型で使用時に指定   
-- `savefig_path` (bool)   
-  is_save=Trueのとき、保存するパス   
+- `title=None` (str)   
+  グラフタイトル   
+- `is_show=False` (bool)   
+  plt.showするかどうか、対話型で使用時に指定   
+- `savefig_path=None` (bool)   
+  保存するパス、保存しない場合Noneを指定   
   拡張子はjpegやpngなど   
 - `ylim=[-5, 5]` (list(num))   
   y軸のプロットする範囲   
+- `figsize=(8, 6)` (list(num))   
+  グラフサイズ   
 
 ---
 ### plot_pdos(args)
@@ -275,12 +277,12 @@ band計算を行ったディレクトリで実行することで、band計算結
   基準として、グラフの0を定める   
   read_highest_occupiedで探した値を入れる   
   EFermiかhighest_occupiedのどちらかは必要   
-- `is_save=False` (bool)   
-  保存を行うかどうか   
-- `is_plot=False` (bool)   
-  plotするかどうか、対話型で使用時に指定   
-- `savefig_path` (bool)   
-  is_save=Trueのとき、保存するパス   
+- `title=None` (str)   
+  グラフタイトル   
+- `is_show=False` (bool)   
+  plt.showするかどうか、対話型で使用時に指定   
+- `savefig_path=None` (bool)   
+  保存するパス、保存しない場合Noneを指定   
   拡張子はjpegやpngなど   
 - `xlim=[-10, 10]` (list(num))   
   x軸のプロットする範囲、highest_occupiedかEFermiが0になる   
@@ -289,6 +291,101 @@ band計算を行ったディレクトリで実行することで、band計算結
 - `color_dict` (dict(str:str))   
   元素ごとにまとまってプロットするため、元素ごとに色を変えることが可能。   
   設定しない場合黒になる。   
+- `figsize=(8, 6)` (list(num))   
+  グラフサイズ   
+
+---
+### plot_relax_out(args)
+#### 概要
+relax,vc-relax計算のoutputからtotal_energy,Total_force,Pの変化をプロットします。
+#### Parameters:
+- `import_out_path` (str)   
+  relax,vc-relax計算のoutputファイルパス   
+- `title=None` (str)   
+  グラフタイトル   
+- `is_show=False` (bool)   
+  plt.showするかどうか、対話型で使用時に指定   
+- `savefig_path=None` (bool)   
+  保存するパス、保存しない場合Noneを指定   
+  拡張子はjpegやpngなど   
+- `figsize=(12, 4)` (list(num))   
+  グラフサイズ   
+
+---
+### MonitorPlotRelaxOut(args)
+#### 概要
+計算中のrelax,vc-relax計算のoutputからtotal_energie,Total_force,Pの変化をプロットします。
+##### 使い方
+```python
+with MonitorPlotRelaxOut(output_path, savefig_path=savefig_path, 
+            is_show=is_show, figsize=figsize, interval=interval, title=title):
+    command = f"nice -n 5 mpirun -np 32 pw.x <{input_path} >{output_path}"
+    ret = subprocess.run(command, shell=True, capture_output=True, text=True, start_new_session=True)
+```
+#### Parameters:
+- `import_out_path` (str)   
+  relax,vc-relax計算のoutputファイルパス   
+- `title=None` (str)   
+  グラフタイトル   
+- `is_show=False` (bool)   
+  plt.showするかどうか、対話型で使用時に指定   
+- `savefig_path=None` (bool)   
+  保存するパス、保存しない場合Noneを指定   
+  拡張子はjpegやpngなど   
+- `figsize=(12, 4)` (list(num))   
+  グラフサイズ   
+- `interval=60` (num)   
+  plot,保存する時間間隔   
+  単位は秒   
+
+---
+### check_scf_out(args)
+#### 概要
+relax,vc-relax計算などを計算する際、K_point_Density_Productを指定するが、   
+計算の妥当性検証として、K_point_Density_Productを変えてscf計算をし、total_energy,Total_force,Pの収束を見ることがある   
+scf計算のoutputから値を抽出する。   
+#### Parameters:
+- `import_out_path` (str)   
+  scf計算のoutputファイルパス   
+#### Returns:
+- `total_energy` (float)   
+  outputファイルから抽出するtotal_energy   
+- `Total_force` (float)   
+  outputファイルから抽出するTotal_force   
+- `P` (float)   
+  outputファイルから抽出するP   
+
+---
+### plot_scf_out(args)
+#### 概要
+relax,vc-relax計算などを計算する際、K_point_Density_Productを指定するが、   
+計算の妥当性検証として、K_point_Density_Productを変えてscf計算をし、total_energy,Total_force,Pの収束を見ることがある   
+`check_scf_out`を使用し得た値をプロットする。   
+#### Parameters:
+- `kpoints` list(list(int))   
+  scf計算で使用したkpoints   
+  `[[1,1,1], [2,2,1], [3,3,1], [4,4,2]]`のようなlist   
+  kpointなのでint   
+- `abc` list(float)   
+  a,b,c軸長   
+  `[a, b, c]`のようなlist   
+- `total_energies` (list(num))   
+  check_scf_outより得たtotal_energyのlist
+- `Total_forces` (list(num))   
+  check_scf_outより得たTotal_forceのlist
+- `Ps` (list(num))   
+  check_scf_outより得たPのlist
+- `import_out_path` (str)   
+  scf計算のoutputファイルパス   
+- `title=None` (str)   
+  グラフタイトル   
+- `is_show=False` (bool)   
+  plt.showするかどうか、対話型で使用時に指定   
+- `savefig_path=None` (bool)   
+  保存するパス、保存しない場合Noneを指定   
+  拡張子はjpegやpngなど   
+- `figsize=(12, 4)` (list(num))   
+  グラフサイズ   
 
 
 ## 参考サイト
