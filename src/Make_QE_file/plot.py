@@ -401,7 +401,7 @@ def plot_pdos(
         plt.show()
 
 
-def plot_relax_out(import_out_path, title=None, figsize=(12, 4), save_path=None, is_show=True):
+def plot_relax_out(import_out_path, title=None, figsize=(12, 4), savefig_path=None, is_show=True):
     if not os.path.exists(import_out_path):
         print(f"Error: Input file not found: {import_out_path}")
         return None
@@ -574,27 +574,27 @@ def plot_relax_out(import_out_path, title=None, figsize=(12, 4), save_path=None,
     plt.tight_layout(rect=[0, 0, 1, 0.96])  # 全体タイトルと重ならないように調整
 
     # 画像の保存ロジック
-    if save_path:  # save_pathがNoneでない場合（つまり、保存したい場合）
-        if not isinstance(save_path, str) or not save_path:  # 文字列でない、または空文字列の場合
+    if savefig_path:  # save_pathがNoneでない場合（つまり、保存したい場合）
+        if not isinstance(savefig_path, str) or not savefig_path:  # 文字列でない、または空文字列の場合
             print("Error: Invalid save_path provided. Please provide a valid string path.")
         else:
             try:
                 # ディレクトリが存在しない場合は作成
-                output_dir = os.path.dirname(save_path)
+                output_dir = os.path.dirname(savefig_path)
                 if output_dir and not os.path.exists(output_dir):
                     os.makedirs(output_dir)
-                plt.savefig(save_path)
-                print(f"Plot saved successfully to: {save_path}")
+                plt.savefig(savefig_path)
+                print(f"Plot saved successfully to: {savefig_path}")
             except Exception as e:
-                print(f"Error saving plot to {save_path}: {e}")
+                print(f"Error saving plot to {savefig_path}: {e}")
     if is_show:
         plt.show()
 
 
 class MonitorPlotRelaxOut:
-    def __init__(self, import_out_path, save_path=None, is_show=False, title=None, figsize=(12, 4), interval=60):
+    def __init__(self, import_out_path, savefig_path=None, is_show=False, title=None, figsize=(12, 4), interval=60):
         self.import_out_path = import_out_path
-        self.save_path = save_path
+        self.savefig_path = savefig_path
         self.title = title
         self.figsize = figsize
         self.interval = interval
@@ -613,7 +613,11 @@ class MonitorPlotRelaxOut:
         self._is_in_progress = False
         # final plot
         plot_relax_out(
-            self.import_out_path, title=self.title, figsize=self.figsize, save_path=self.save_path, is_show=self.is_show
+            self.import_out_path,
+            title=self.title,
+            figsize=self.figsize,
+            savefig_path=self.savefig_path,
+            is_show=self.is_show,
         )
 
     def _monitor_and_plot_loop(self):
@@ -623,14 +627,14 @@ class MonitorPlotRelaxOut:
                 self.import_out_path,
                 title=self.title,
                 figsize=self.figsize,
-                save_path=self.save_path,
+                savefig_path=self.savefig_path,
                 is_show=self.is_show,
             )
             time.sleep(self.interval)
 
 
 def plot_scf_out(
-    kpoints, abc, total_energies, Total_forces, Ps, title=None, figsize=(12, 4), save_path=None, is_show=True
+    kpoints, abc, total_energies, Total_forces, Ps, title=None, figsize=(12, 4), savefig_path=None, is_show=True
 ):
 
     kpoints = np.array(kpoints)
@@ -734,19 +738,19 @@ def plot_scf_out(
     plt.tight_layout(rect=[0, 0, 1, 0.96])  # 全体タイトルと重ならないように調整
 
     # 画像の保存ロジック
-    if save_path:  # save_pathがNoneでない場合（つまり、保存したい場合）
-        if not isinstance(save_path, str) or not save_path:  # 文字列でない、または空文字列の場合
+    if savefig_path:  # save_pathがNoneでない場合（つまり、保存したい場合）
+        if not isinstance(savefig_path, str) or not savefig_path:  # 文字列でない、または空文字列の場合
             print("Error: Invalid save_path provided. Please provide a valid string path.")
         else:
             try:
                 # ディレクトリが存在しない場合は作成
-                output_dir = os.path.dirname(save_path)
+                output_dir = os.path.dirname(savefig_path)
                 if output_dir and not os.path.exists(output_dir):
                     os.makedirs(output_dir)
-                plt.savefig(save_path)
-                print(f"Plot saved successfully to: {save_path}")
+                plt.savefig(savefig_path)
+                print(f"Plot saved successfully to: {savefig_path}")
             except Exception as e:
-                print(f"Error saving plot to {save_path}: {e}")
+                print(f"Error saving plot to {savefig_path}: {e}")
 
     if is_show:
         plt.show()
