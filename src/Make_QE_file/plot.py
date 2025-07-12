@@ -611,7 +611,7 @@ class MonitorPlotRelaxOut:
         self._monitor_thread.start()
         return self
 
-    def __exit__(self):
+    def __exit__(self, *args):
         self._is_in_progress = False
         # final plot
         plot_relax_out(
