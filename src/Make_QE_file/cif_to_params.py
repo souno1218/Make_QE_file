@@ -59,6 +59,12 @@ def cif_to_params(import_cif_path):
                         params_cif["space_group_number"] = int(j)
                     except:
                         None
+            if "_symmetry_space_group_number" in one_line:
+                for j in one_line.split():
+                    try:
+                        params_cif["space_group_number"] = int(j)
+                    except:
+                        None
             if "loop_" in one_line:
                 list_loop_index.append(i)
         list_loop_index.append(len(cif_data))
@@ -89,8 +95,8 @@ def cif_to_params(import_cif_path):
                 labels.append(one_data[loop_label_2_index["label"]])
         n = 0
         for i in range(len(labels)):
-            while labels[i] in [*labels[:i], *labels[i+1:]]:
-                labels[i] = f'{labels[i]}_{n}'
+            while labels[i] in [*labels[:i], *labels[i + 1 :]]:
+                labels[i] = f"{labels[i]}_{n}"
                 n += 1
 
         df_ATOMIC_POSITIONS = pd.DataFrame(columns=["label", "symbol", "str_x", "str_y", "str_z"])
